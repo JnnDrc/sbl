@@ -1,0 +1,6 @@
+stack_number   = float
+stack_string   = const char*
+stack_object = {
+    stack_number num;
+    stack_string str;
+}
