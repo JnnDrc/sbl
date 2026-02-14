@@ -22,6 +22,9 @@ char* sblo_op_string(sbl_op_n op){
         case OP_LE:     return "le";
         case OP_EQ:     return "eq";
         case OP_NEQ:    return "neq";
+        case OP_POW:    return "pow";
+        case OP_SQR:    return "sqr";
+        case OP_SQRT:   return "sqrt";
         case OP_ECHO:   return "echo";
         default:        return "unknown";
     }

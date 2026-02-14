@@ -47,20 +47,23 @@ int sblc_compile_line(char* line, ilist_t* il, constabl_t* ct){
     else if (streq(op,"dup"))  ilist_add(il,MAKE_OP(OP_DUP));
     else if (streq(op,"over")) ilist_add(il,MAKE_OP(OP_OVER));
     else if (streq(op,"rot"))  ilist_add(il,MAKE_OP(OP_LROT));
-    else if (streq(op,"+rot"))  ilist_add(il,MAKE_OP(OP_LROT));
-    else if (streq(op,"-rot"))  ilist_add(il,MAKE_OP(OP_RROT));
+    else if (streq(op,"+rot")) ilist_add(il,MAKE_OP(OP_LROT));
+    else if (streq(op,"-rot")) ilist_add(il,MAKE_OP(OP_RROT));
     else if (streq(op,"jump")){
         int ci = const_find(ct,ka);
         if (ci < 0) ci = const_add(ct, ka);
         ilist_add(il,MAKE_OPK(OP_JUMP,ci));
     } 
-    else if (streq(op,"hop")) ilist_add(il,MAKE_OP(OP_HOP));
-    else if (streq(op,"gt"))  ilist_add(il,MAKE_OP(OP_GT));
-    else if (streq(op,"lt"))  ilist_add(il,MAKE_OP(OP_LT));
-    else if (streq(op,"ge"))  ilist_add(il,MAKE_OP(OP_GE));
-    else if (streq(op,"le"))  ilist_add(il,MAKE_OP(OP_LE));
-    else if (streq(op,"eq"))  ilist_add(il,MAKE_OP(OP_EQ));
-    else if (streq(op,"neq")) ilist_add(il,MAKE_OP(OP_NEQ));
+    else if (streq(op,"hop"))  ilist_add(il,MAKE_OP(OP_HOP));
+    else if (streq(op,"gt"))   ilist_add(il,MAKE_OP(OP_GT));
+    else if (streq(op,"lt"))   ilist_add(il,MAKE_OP(OP_LT));
+    else if (streq(op,"ge"))   ilist_add(il,MAKE_OP(OP_GE));
+    else if (streq(op,"le"))   ilist_add(il,MAKE_OP(OP_LE));
+    else if (streq(op,"eq"))   ilist_add(il,MAKE_OP(OP_EQ));
+    else if (streq(op,"neq"))  ilist_add(il,MAKE_OP(OP_NEQ));
+    else if (streq(op,"pow"))  ilist_add(il,MAKE_OP(OP_POW));
+    else if (streq(op,"sqr"))  ilist_add(il,MAKE_OP(OP_POW));
+    else if (streq(op,"sqrt")) ilist_add(il,MAKE_OP(OP_POW));
     else if (streq(op,"echo")){
         int ci = const_find(ct,ka);
         if (ci < 0) ci = const_add(ct,ka);
@@ -87,18 +90,21 @@ void sblc_emit(FILE* fp, ilist_t* il, constabl_t* ct){
 }
 
 int main(int argc, char* argv[]){
-    if(argc < 2) return -1;
+    if(argc < 2){
+        fprintf(stderr,"USAGE: %s input [output]", argv[0]);
+        return -1;
+    }
 
     FILE* fin  = fopen(argv[1],"r");
     char* out  = argv[2] ? argv[2] : "sbl.out";
     FILE* fout = fopen(out,"wb");
 
     if(!fin){
-        fprintf(stderr,"[ERROR]: failed to open file %s",argv[1]);
+        fprintf(stderr,"ERROR: failed to open file %s",argv[1]);
         return -1;
     }
     if(!fout){
-        fprintf(stderr,"[ERROR]: can't open output file");
+        fprintf(stderr,"ERROR: can't open output file");
         return -1;
     }
 
@@ -114,7 +120,7 @@ int main(int argc, char* argv[]){
         
         int r = sblc_compile_line(line,&il,&ct);
         if (r){
-            fprintf(stderr,"[ERROR]: unknown operation at line %zu",l);
+            fprintf(stderr,"ERROR: unknown operation at line %zu",l);
             return -1;
         }
     }
