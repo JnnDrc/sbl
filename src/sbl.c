@@ -9,54 +9,12 @@
 #include "sblinst.h"
 #include "sblconst.h"
 
+#include "sblvm.h"
+
 #define abs(x)   ((x) < 0 ? (-x) : (x))
 #define max(a,b) ((a) > (b) ? (a) : (b))
 #define min(a,b) ((a) < (b) ? (a) : (b))
 #define sign(x)  ((x) == 0 ? 0 : (x) < 0 ? -1 : 1)
-
-#define STACK_SIZE 512
-#define STACK_TYPE float
-typedef STACK_TYPE stype_t ;
-typedef struct stack {
-    int32_t top;
-    stype_t data[STACK_SIZE];
-}stack_t;
-
-void stk_push(stack_t *s,float v){
-    s->data[++s->top] = v;
-}
-
-float stk_pop(stack_t *s){
-    return s->data[s->top--];
-}
-
-void stk_trace(stack_t* s){
-    float max = 0;
-    int width = 0;
-    for(int32_t i = s->top; i >= 0; i--) max = max(abs(s->data[i]),max);
-    width = (int)roundf(1+logf(max)/logf(10.0f));
-    for(int i = 0; i < width + 3 + 2 + 2; i++) putchar('-');
-    putchar('\n');
-    for(int32_t i = s->top; i >= 0; i--) printf("| %*.02f |\n",width+3,s->data[i]);
-    for(int i = 0; i < width + 3 + 2 + 2; i++) putchar('-');
-    putchar('\n');
-}
-
-typedef struct sbl_bin_header{
-    char magic[2];  // SB
-    uint16_t insts;  //
-    uint32_t ctb_off;
-}sblh_t;
-
-typedef struct sbl_machine{
-    // program data
-    sblh_t      info;
-    ilist_t     insts;
-    constabl_t  consts;
-    // exec data
-    bool halt;
-    uint16_t ip;
-}sblm_t;
 
 #define cast(T, v) (T)(v)
 
@@ -64,151 +22,135 @@ int main(int argc, char* argv[]){
     if (argc < 2) return -1;
     FILE* in = fopen(argv[1],"rb");
     int dbg = argv[2] ? argv[2][0] == 'g' ? 1 : 0 : 0;
-
-    stack_t s = {.top = -1, .data = {0}};
-    sblm_t M = {0};
-    fread(&M.info,sizeof(M.info),1,in);
     
-    if (strncmp(M.info.magic,"SB",2)){
+    sblvm_t vm = {0};
+    int r = sblvm_load(&vm,in);
+    if (r == 1){
         fprintf(stderr,"[ERROR]: can't run file, not sbinl");
     }
-    printf("%c%c: %hu, %u\n",M.info.magic[0],M.info.magic[1],M.info.insts,M.info.ctb_off);
 
-    M.insts.size = M.info.insts;
-    fread(M.insts.data,sizeof(inst_t),M.info.insts,in);
-
-    long cur = ftell(in);
-    fseek(in,0L,SEEK_END);
-    long end = ftell(in);
-
-    long remain = end - cur;
-    fseek(in,cur,SEEK_SET);
-    
-    M.consts.size = remain / sizeof(float);
-    fread(M.consts.data,1,remain,in);
-
-    while(!M.halt){
-        uint32_t inst = M.insts.data[M.ip];
+    while(!vm.halt){
+        uint32_t inst = vm.insts.data[vm.ip];
         uint16_t op = cast(uint16_t,DEC_OP(inst));
         switch (op) {
         case OP_NONE:
-            M.halt = true;
+            vm.halt = true;
             break;
         case OP_ADD: {
-             float a = stk_pop(&s);
-             float b = stk_pop(&s);
-             stk_push(&s,a + b);
+             float a = stk_pop(&vm.stack);
+             float b = stk_pop(&vm.stack);
+             stk_push(&vm.stack,a + b);
              break;
          }
         case OP_SUB:{
-             float a = stk_pop(&s);
-             float b = stk_pop(&s);
-             stk_push(&s,a - b);
+             float a = stk_pop(&vm.stack);
+             float b = stk_pop(&vm.stack);
+             stk_push(&vm.stack,a - b);
              break;
         }
         case OP_MUL:{
-             float a = stk_pop(&s);
-             float b = stk_pop(&s);
-             stk_push(&s,a * b);
+             float a = stk_pop(&vm.stack);
+             float b = stk_pop(&vm.stack);
+             stk_push(&vm.stack,a * b);
              break;
         }
         case OP_DIV:{
-            float a = stk_pop(&s);
-            float b = stk_pop(&s);
-            stk_push(&s, a / b);
+            float a = stk_pop(&vm.stack);
+            float b = stk_pop(&vm.stack);
+            stk_push(&vm.stack, a / b);
             break;
         }
         case OP_PUSH:{
-                stype_t x = M.consts.data[cast(uint32_t,DEC_K(inst))];
-                stk_push(&s,x);
+                stype_t x = vm.consts.data[cast(uint32_t,DEC_K(inst))];
+                stk_push(&vm.stack,x);
                 break;
         }
         case OP_POP:{
-            stk_pop(&s);
+            stk_pop(&vm.stack);
             break;
         }
         case OP_SWAP:{
-            stype_t a = stk_pop(&s);
-            stype_t b = stk_pop(&s);
-            stk_push(&s,a);
-            stk_push(&s,b);
+            stype_t a = stk_pop(&vm.stack);
+            stype_t b = stk_pop(&vm.stack);
+            stk_push(&vm.stack,a);
+            stk_push(&vm.stack,b);
             break;
         }
         case OP_DUP:{
-            stype_t x = stk_pop(&s);
-            stk_push(&s,x);
-            stk_push(&s,x);
+            stype_t x = stk_pop(&vm.stack);
+            stk_push(&vm.stack,x);
+            stk_push(&vm.stack,x);
             break;
         }
         case OP_OVER:{
-            stype_t a = stk_pop(&s);
-            stype_t b = stk_pop(&s);
+            stype_t a = stk_pop(&vm.stack);
+            stype_t b = stk_pop(&vm.stack);
 
-            stk_push(&s,b);
-            stk_push(&s,a);
-            stk_push(&s,b);
+            stk_push(&vm.stack,b);
+            stk_push(&vm.stack,a);
+            stk_push(&vm.stack,b);
             break;
         }
         case OP_LROT:{
-            stype_t tmp = s.data[s.top - 2];
-            s.data[s.top - 2] = s.data[s.top - 1];
-            s.data[s.top - 1] = s.data[s.top];
-            s.data[s.top] = tmp;
+            stype_t tmp = vm.stack.data[vm.stack.top - 2];
+            vm.stack.data[vm.stack.top - 2] = vm.stack.data[vm.stack.top - 1];
+            vm.stack.data[vm.stack.top - 1] = vm.stack.data[vm.stack.top];
+            vm.stack.data[vm.stack.top] = tmp;
             break;
         }
         case OP_RROT:{
             // 1 2 2 -> 2 1 2
             // a b c -> c a b
-            stype_t tmp = s.data[s.top];
-            s.data[s.top] = s.data[s.top - 1];
-            s.data[s.top - 1] = s.data[s.top - 2];
-            s.data[s.top - 2] = tmp;
+            stype_t tmp = vm.stack.data[vm.stack.top];
+            vm.stack.data[vm.stack.top] = vm.stack.data[vm.stack.top - 1];
+            vm.stack.data[vm.stack.top - 1] = vm.stack.data[vm.stack.top - 2];
+            vm.stack.data[vm.stack.top - 2] = tmp;
             break;
         }
         case OP_JUMP:{
-            stype_t x = M.consts.data[cast(uint32_t,DEC_K(inst))];
-            M.ip += (int)x - 1;
+            stype_t x = vm.consts.data[cast(uint32_t,DEC_K(inst))];
+            vm.ip += (int)x - 1;
             break;
         }
         case OP_HOP:{
-            stype_t c = stk_pop(&s);
-            if(c) M.ip++;
+            stype_t c = stk_pop(&vm.stack);
+            if(c) vm.ip++;
             break;
         }
         case OP_GT:{
-            stype_t a = stk_pop(&s);
-            stype_t b = stk_pop(&s);
-            stk_push(&s,a > b);
+            stype_t a = stk_pop(&vm.stack);
+            stype_t b = stk_pop(&vm.stack);
+            stk_push(&vm.stack,a > b);
             break;
        }
         case OP_ECHO:{
-            stype_t x = M.consts.data[cast(uint32_t,DEC_K(inst))];
-            if ((int)x == 0) printf("%f\n",s.data[s.top]);
+            stype_t x = vm.consts.data[cast(uint32_t,DEC_K(inst))];
+            if ((int)x == 0) printf("%f\n",vm.stack.data[vm.stack.top]);
             else{
                 printf("|");
-                for(int i = s.top - (x - 1); i <= s.top ;i++) printf("%f ",s.data[i]);
+                for(int i = vm.stack.top - (x - 1); i <= vm.stack.top ;i++) printf("%f ",vm.stack.data[i]);
                 printf("\n");
             }
             fflush(stdout);
             break;
         }
         default:
-            fprintf(stderr,"[ ERROR ]: unknown opcode %x at %hu", op, M.ip);
+            fprintf(stderr,"[ ERROR ]: unknown opcode %x at %zu", op, vm.ip);
             return -1;
         }
 
         if (dbg){
-            printf("ip: %d | op: %s \n",M.ip,sblo_op_string(DEC_OP(inst)));
+            printf("ip: %zu | op: %s \n",vm.ip,sblo_op_string(DEC_OP(inst)));
             printf("[");
-            for(int i = 0; i <= s.top; i++){
-                printf("%.02f ",s.data[i]);
+            for(int i = 0; i <= vm.stack.top; i++){
+                printf("%.02f ",vm.stack.data[i]);
             }
             printf("]\n");
             getc(stdin);
             fflush(stdout);
         }
 
-        M.ip++;
+        vm.ip++;
     }
 
     return 0;
