@@ -3,6 +3,7 @@
 #include <stdint.h>
 #include <math.h>
 #include <stdbool.h>
+#include <string.h>
 
 #include "sblop.h"
 #include "sblinst.h"
@@ -67,7 +68,10 @@ int main(int argc, char* argv[]){
     stack_t s = {.top = -1, .data = {0}};
     sblm_t M = {0};
     fread(&M.info,sizeof(M.info),1,in);
-
+    
+    if (strncmp(M.info.magic,"SB",2)){
+        fprintf(stderr,"[ERROR]: can't run file, not sbinl");
+    }
     printf("%c%c: %hu, %u\n",M.info.magic[0],M.info.magic[1],M.info.insts,M.info.ctb_off);
 
     M.insts.size = M.info.insts;
@@ -145,9 +149,25 @@ int main(int argc, char* argv[]){
             stk_push(&s,b);
             break;
         }
+        case OP_LROT:{
+            stype_t tmp = s.data[s.top - 2];
+            s.data[s.top - 2] = s.data[s.top - 1];
+            s.data[s.top - 1] = s.data[s.top];
+            s.data[s.top] = tmp;
+            break;
+        }
+        case OP_RROT:{
+            // 1 2 2 -> 2 1 2
+            // a b c -> c a b
+            stype_t tmp = s.data[s.top];
+            s.data[s.top] = s.data[s.top - 1];
+            s.data[s.top - 1] = s.data[s.top - 2];
+            s.data[s.top - 2] = tmp;
+            break;
+        }
         case OP_JUMP:{
             stype_t x = M.consts.data[cast(uint32_t,DEC_K(inst))];
-            M.ip += ((int)x - sign(x));
+            M.ip += (int)x - 1;
             break;
         }
         case OP_HOP:{
@@ -164,7 +184,12 @@ int main(int argc, char* argv[]){
         case OP_ECHO:{
             stype_t x = M.consts.data[cast(uint32_t,DEC_K(inst))];
             if ((int)x == 0) printf("%f\n",s.data[s.top]);
-            else for(int i = 0; i < (int)x; i++) printf("%f\n",s.data[s.top - i]);
+            else{
+                printf("|");
+                for(int i = s.top - (x - 1); i <= s.top ;i++) printf("%f ",s.data[i]);
+                printf("\n");
+            }
+            fflush(stdout);
             break;
         }
         default:
@@ -173,20 +198,17 @@ int main(int argc, char* argv[]){
         }
 
         if (dbg){
-            stk_trace(&s);
-            // printf("ip: %d | op: %d \n",M.ip,DEC_OP(inst));
-            // putc('[',stdout);
-            // for(int i = 0; i < s.top; i++){
-            //     printf("%.02f",s.data[i]);
-            //     if(i + 1 < s.top) putc(',',stdout);
-            // }
-            // puts("]");
+            printf("ip: %d | op: %s \n",M.ip,sblo_op_string(DEC_OP(inst)));
+            printf("[");
+            for(int i = 0; i <= s.top; i++){
+                printf("%.02f ",s.data[i]);
+            }
+            printf("]\n");
             getc(stdin);
+            fflush(stdout);
         }
 
-        fflush(stdout);
         M.ip++;
-
     }
 
     return 0;

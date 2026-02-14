@@ -1,7 +1,7 @@
 #include "sblconst.h"
 
-int const_find(constabl_t ct, float f){
-    for(int i = 0; i < ct.size; i++) if (ct.data[i] == f) return i;
+int const_find(constabl_t* ct, float f){
+    for(int i = 0; i < ct->size; i++) if (ct->data[i] == f) return i;
     return -1;
 }
 

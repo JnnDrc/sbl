@@ -12,6 +12,8 @@ typedef enum sbl_op{
     OP_SWAP = 7,    // op
     OP_DUP  = 8,    // op
     OP_OVER = 9,    // op
+    OP_LROT = 10,   // op
+    OP_RROT = 11,   // op
 
     OP_JUMP = 15,   // op k
     OP_HOP  = 16,   // op
@@ -26,5 +28,7 @@ typedef enum sbl_op{
     // OP_SQRT,
     OP_ECHO     // op k
 }sbl_op_n;
+
+char* sblo_op_string(sbl_op_n op);
 
 #endif /* _SBLOP_H */

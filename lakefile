@@ -3,7 +3,7 @@ local cflags = " -Wall " .. " -Wextra" .. " -g " .. "-I./src "
 
 local src_dir  = "src/"
 
-local src      = src_dir .. "sblinst.c " .. src_dir .. "sblconst.c"
+local src      = src_dir .. "sblinst.c " .. src_dir .. "sblconst.c " .. src_dir .. "sblop.c"
 
 local sblc_src = src_dir .. "sblc.c " .. src
 local sbl_src  = src_dir .. "sbl.c "  .. src

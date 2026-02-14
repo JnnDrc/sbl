@@ -59,7 +59,7 @@ int main(int argc, char* argv[]){
     // printf("i: OP   K | A B\n");
     for(int i = 0; i < M.insts.size; i++){
         uint32_t it = M.insts.data[i];
-        printf("%0*d: %d    %d | %hu %hu \n",width,i, DEC_OP(it),cast(uint32_t,DEC_K(it)),cast(uint16_t,DEC_A(it)),cast(uint16_t,DEC_B(it)));
+        printf("%0*d: (%03d) %s\t    %d (%hu %hu) \n",width,i,DEC_OP(it),sblo_op_string(DEC_OP(it)),cast(uint32_t,DEC_K(it)),cast(uint16_t,DEC_A(it)),cast(uint16_t,DEC_B(it)));
     }
     printf("CONSTANTS----------\n");
     // printf("i:    K\n");

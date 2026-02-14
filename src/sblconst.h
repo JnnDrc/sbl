@@ -10,7 +10,7 @@ typedef struct const_table{
 }constabl_t;
 
 
-int const_find(constabl_t ct, float f);
+int const_find(constabl_t* ct, float f);
 int const_add(constabl_t* ct, float f);
 
 #endif /* _SBLCOST_H */
