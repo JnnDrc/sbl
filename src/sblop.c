@@ -7,6 +7,7 @@ char* sblo_op_string(sbl_op_n op){
         case OP_SUB:    return "sub";
         case OP_MUL:    return "mul";
         case OP_DIV:    return "div";
+        case OP_MOD:    return "mod";
         case OP_PUSH:   return "push";
         case OP_POP:    return "pop";
         case OP_SWAP:   return "swap";

@@ -10,6 +10,7 @@
 #include "sblconst.h"
 #include "sblinst.h"
 #include "sblstack.h"
+#include "sblvm.h"
 #include "sbldef.h"
 
 
@@ -49,6 +50,7 @@ int sblc_compile_line(char* line, ilist_t* il, constabl_t* ct, lablist_t* ll){
     else if (streq(op,"sub")) ilist_add(il,MAKE_OP(OP_SUB));
     else if (streq(op,"mul")) ilist_add(il,MAKE_OP(OP_MUL));
     else if (streq(op,"div")) ilist_add(il,MAKE_OP(OP_DIV));
+    else if (streq(op,"mod")) ilist_add(il,MAKE_OP(OP_MOD));
     else if (streq(op,"push")){
         int ci = const_find(ct,ka);
         if (ci < 0) ci = const_add(ct, ka);
@@ -125,13 +127,8 @@ int sblc_compile_line(char* line, ilist_t* il, constabl_t* ct, lablist_t* ll){
 
 void sblc_emit(FILE* fp, ilist_t* il, constabl_t* ct, lablist_t* ll){
     // header
-    fwrite("SB",2,1,fp);                            // magic number
-    fwrite(&il->size,sizeof(uint16_t),1,fp);        // amount of instructions
-    uint32_t ctoff = il->size * sizeof(*il->data);  // const table offset
-    fwrite(&ctoff,sizeof(ctoff),1,fp);
-    int32_t start = label_find(ll,"main");          // start address
-    if (start < 0) start = 0;
-    fwrite(&start,sizeof(uint32_t),1,fp);
+    sblbinh_t bi = sbl_make_info(il,ct,ll);
+    fwrite(&bi,sizeof(bi),1,fp);
 
     // instructions
     fwrite(il->data,sizeof(*il->data),il->size,fp);

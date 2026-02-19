@@ -2,6 +2,7 @@
 #include <stdint.h>
 #include <string.h>
 
+#include "sbldef.h"
 #include "sblconst.h"
 #include "sblstack.h"
 
@@ -16,7 +17,7 @@ int constabl_init(constabl_t* ct){
 }
 
 int const_find(constabl_t* ct, stkobj_t f){
-    for(int i = 0; i < ct->size; i++) if (!memcmp(&ct->data[i],&f,sizeof(stkobj_t))) return i;
+    for(int i = 0; i < ct->size; i++) if (memeq(&ct->data[i],&f,sizeof(stkobj_t))) return i;
     return CONST_NOT_FOUND;
 }
 

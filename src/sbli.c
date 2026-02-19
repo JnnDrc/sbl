@@ -26,7 +26,7 @@ int main(int argc, char* argv[]){
     sblvm_load(&vm,in);
 
     printf("INFO-----------------------------------*\n");
-    printf("SBL Bytecode Binary\n");
+    printf("SBL Bytecode Binary - Version %d.%d \n", SBLVER_MAJOR(vm.bin_info.version),SBLVER_MINOR(vm.bin_info.version));
     printf("%hu instructions\n",vm.bin_info.insts);
     printf("%hu constants, table at <instructions>+%u\n",vm.consts.size,vm.bin_info.ctb_off);
     printf("program start at %u\n",vm.bin_info.start);

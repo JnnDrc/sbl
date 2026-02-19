@@ -7,6 +7,23 @@
 #include "sblop.h"
 #include "sblvm.h"
 
+sblbinh_t sbl_make_info(ilist_t *il, constabl_t *ct, lablist_t *ll){
+    sblbinh_t bi;
+    // magic number
+    bi.magic[0] = 'S';
+    bi.magic[1] = 'B';
+
+    // instruction count
+    bi.insts = il->size;
+    // const table offset
+    bi.ctb_off = il->size * sizeof(*il->data);
+    int32_t start = label_find(ll,"main");          // start address
+    if (start < 0) start = 0;
+    bi.start = start;
+    bi.version = SBL_MAKE_VERSION(SBL_MAJOR,SBL_MINOR);
+    return bi;
+}
+
 int sblvm_load(sblvm_t* vm, FILE* fp){
     stack_init(&vm->data);
     ilist_init(&vm->insts);
@@ -64,6 +81,12 @@ int sblvm_exec(sblvm_t* vm){
             stkobj_t a = stk_pop(&vm->data);
             stkobj_t b = stk_pop(&vm->data);
             stk_push(&vm->data,stkfloat(a.as_float / b.as_float));
+            break;
+        }
+        case OP_MOD:{
+            stkobj_t a = stk_pop(&vm->data);
+            stkobj_t b = stk_pop(&vm->data);
+            stk_push(&vm->data, stkfloat((int32_t)a.as_float % (int32_t)b.as_float));
             break;
         }
         case OP_PUSH:{
@@ -178,12 +201,12 @@ int sblvm_exec(sblvm_t* vm){
         }
         case OP_CALL:{
             stkobj_t ip = vm->consts.data[cast(uint32_t,DEC_K(inst))];
-            stk_push(&vm->ret,stkuint(vm->ip));
+            stk_push(&vm->call,stkuint(vm->ip));
             vm->ip += (int)ip.as_int - 1;
             break;
         }
         case OP_RET:{
-            vm->ip = stk_pop(&vm->ret).as_uint;
+            vm->ip = stk_pop(&vm->call).as_uint;
             break;
         }
         case OP_ECHO:{

@@ -8,17 +8,19 @@ typedef enum sbl_op{
     OP_SUB   = 2,   // op
     OP_MUL   = 3,   // op
     OP_DIV   = 4,   // op
+    OP_MOD   = 5,   // op
 
-    OP_PUSH  = 5,   // op k
-    OP_POP   = 6,   // op
-    OP_SWAP  = 7,   // op
-    OP_DUP   = 8,   // op
-    OP_OVER  = 9,   // op
-    OP_LROT  = 10,  // op
-    OP_RROT  = 11,  // op
+    OP_PUSH  = 6,   // op k
+    OP_POP   = 7,   // op
+    OP_SWAP  = 8,   // op
+    OP_DUP   = 9,   // op
+    OP_OVER  = 10,   // op
+    OP_LROT  = 11,  // op
+    OP_RROT  = 12,  // op
 
     OP_JUMP  = 15,  // op k
     OP_HOP   = 16,  // op
+
     OP_GT    = 20,  // op
     OP_LT    = 21,  // op
     OP_GE    = 22,  // op

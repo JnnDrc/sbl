@@ -5,24 +5,31 @@
 #include <stdbool.h>
 #include <stdio.h>
 
+#include "sblver.h"
 #include "sblconst.h"
 #include "sblinst.h"
 #include "sblstack.h"
+#include "sblcc.h"
+
 
 typedef struct sbl_binh{
     char        magic[2];  // SB
     uint16_t    insts;
     uint32_t    ctb_off;
     uint32_t    start;
+    sblver_t    version;
 }sblbinh_t;
+
+sblbinh_t sbl_make_info(ilist_t *il, constabl_t *ct, lablist_t *ll);
 
 typedef struct sblvm{
     sblbinh_t   bin_info;
 
-    stack_t     data;
-    stack_t     ret;
     ilist_t     insts;
     constabl_t  consts;
+
+    stack_t     data;
+    stack_t     call;
 
     size_t      ip;
     bool        halt;
