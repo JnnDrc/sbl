@@ -1,6 +1,8 @@
 /*.exe
+/*.o
+/src/*.o
 /*.out
-/*.slb
 /*.dump
 /*.txt
+/*.slb
 /*.bl

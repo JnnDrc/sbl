@@ -7,4 +7,6 @@
 
 #define cast(t,v) (t)(v)
 
+typedef unsigned int uint;
+
 #endif /* _SBLDEF_H */

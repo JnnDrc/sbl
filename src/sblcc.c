@@ -27,8 +27,10 @@ static void trim(char* str){
 }
 
 int sblc_compile_line(char* line, ilist_t* il, constabl_t* ct){
+    trim(line);
+    if(strlen(line) <= 0) return 0;
+    if(line[0] == '#')    return 0;
     char* op = strtok(line," ");
-    trim(op);
     stype_t ka = atoi(strtok(NULL," "));
     int16_t b  = atoi(strtok(NULL," "));
     (void)b;

@@ -1,8 +1,9 @@
+-- this is the script of my build system, ignore it
 local cc = "gcc"
-local cflags = " -Wall " .. " -Wextra" .. " -g " .. "-I./src "
+local cflags = " -Wall " .. " -Wextra" .. " -g " .. "-I./src " .. "-O3 "
 
 local src_dir  = "src/"
-local files = {"sblinst.c", "sblconst.c", "sblop.c", "sblvm.c", "sblstack.c"}
+local files = {"sblinst.c", "sblconst.c", "sblstack.c", "sblop.c", "sblvm.c"}
 
 local src = ""
 for i, s in ipairs(files) do

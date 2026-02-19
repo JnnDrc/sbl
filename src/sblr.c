@@ -6,10 +6,12 @@
 
 int main(void){
     
-    sblvm_t vm = {.ip = 0, .bin_info = {0}, .halt = false};
+    sblvm_t vm;
     stack_init(&vm.stack);
     ilist_init(&vm.insts);
     constabl_init(&vm.consts);
+    vm.ip = 0;
+    vm.halt = false;
 
     char line[128];
     for(;;){

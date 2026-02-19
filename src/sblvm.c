@@ -28,6 +28,9 @@ int sblvm_load(sblvm_t* vm, FILE* fp){
     vm->consts.size = remain / sizeof(float);
     fread(vm->consts.data,1,remain,fp);
 
+    vm->ip   = 0;
+    vm->halt = false;
+
     return 0;
 }
 
@@ -157,6 +160,7 @@ int sblvm_exec(sblvm_t* vm){
         }
         case OP_PRINT:{
             printf("%.02f\n",vm->stack.data[vm->stack.top]);
+            break;
         }
         default:
             return EXEC_ERR_UNKNOWN_OPC;
