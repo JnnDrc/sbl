@@ -28,6 +28,6 @@ int       label_add(lablist_t* ll, label_t l);
 int32_t   label_find(lablist_t* ll, char* id);
 
 int sblc_compile_line(char* line, ilist_t* il, constabl_t* ct, lablist_t* ll);
-void sblc_emit(FILE* fp, ilist_t* il, constabl_t* ct);
+void sblc_emit(FILE* fp, ilist_t* il, constabl_t* ct, lablist_t* ll);
 
 #endif /* _SBLCC_H */ 

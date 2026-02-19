@@ -57,7 +57,7 @@ int main(int argc, char* argv[]){
     }
     ilist_add(&il,MAKE_OP(OP_NONE));
 
-    sblc_emit(fout,&il,&ct);
+    sblc_emit(fout,&il,&ct, &ll);
 
     return 0;
 }

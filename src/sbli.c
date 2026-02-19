@@ -28,7 +28,8 @@ int main(int argc, char* argv[]){
     printf("INFO-----------------------------------*\n");
     printf("SBL Bytecode Binary\n");
     printf("%hu instructions\n",vm.bin_info.insts);
-    printf("%hu constants, table at <instructions>+%d\n",vm.consts.size,vm.bin_info.ctb_off);
+    printf("%hu constants, table at <instructions>+%u\n",vm.consts.size,vm.bin_info.ctb_off);
+    printf("program start at %u\n",vm.bin_info.start);
 
     int width = (int)roundf(1+logf(vm.insts.size)/logf(10.0f));
     printf("INSTRUCTIONS---------------------------*\n");
@@ -40,8 +41,8 @@ int main(int argc, char* argv[]){
     printf("CONSTANTS------------------------------*\n");
     // printf("i:    K\n");
     for(uint i = 0; i < vm.consts.size; i++){
-        float k = vm.consts.data[i];
-        printf("%0*d:    %.02f\n",width,i, k);
+        stkobj_t k = vm.consts.data[i];
+        printf("%0*d:    %.02f | %d\n",width,i, k.as_float,k.as_int);
     }
     printf("*--------------------------------------*\n");
     fflush(stdout);

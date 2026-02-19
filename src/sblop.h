@@ -30,6 +30,9 @@ typedef enum sbl_op{
     OP_SQR   = 31,   // op
     OP_SQRT  = 32,   // op
 
+    OP_CALL  = 40,   // op k
+    OP_RET   = 41,   // op
+
     OP_ECHO  = 80,  // op k
     OP_PRINT = 81,  // op
 }sbl_op_n;

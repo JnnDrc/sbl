@@ -25,6 +25,8 @@ char* sblo_op_string(sbl_op_n op){
         case OP_POW:    return "pow";
         case OP_SQR:    return "sqr";
         case OP_SQRT:   return "sqrt";
+        case OP_CALL:   return "call";
+        case OP_RET:    return "ret";
         case OP_ECHO:   return "echo";
         case OP_PRINT:  return "print";
         default:        return "unknown";

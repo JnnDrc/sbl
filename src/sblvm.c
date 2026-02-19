@@ -8,7 +8,7 @@
 #include "sblvm.h"
 
 int sblvm_load(sblvm_t* vm, FILE* fp){
-    stack_init(&vm->stack);
+    stack_init(&vm->data);
     ilist_init(&vm->insts);
     constabl_init(&vm->consts);
 
@@ -28,7 +28,7 @@ int sblvm_load(sblvm_t* vm, FILE* fp){
     vm->consts.size = remain / sizeof(float);
     fread(vm->consts.data,1,remain,fp);
 
-    vm->ip   = 0;
+    vm->ip   = vm->bin_info.start;
     vm->halt = false;
 
     return 0;
@@ -43,123 +43,162 @@ int sblvm_exec(sblvm_t* vm){
             vm->halt = true;
             break;
         case OP_ADD: {
-             float a = stk_pop(&vm->stack);
-             float b = stk_pop(&vm->stack);
-             stk_push(&vm->stack,a + b);
+             stkobj_t a = stk_pop(&vm->data);
+             stkobj_t b = stk_pop(&vm->data);
+             stk_push(&vm->data,stkfloat(a.as_float + b.as_float));
              break;
          }
         case OP_SUB:{
-             float a = stk_pop(&vm->stack);
-             float b = stk_pop(&vm->stack);
-             stk_push(&vm->stack,a - b);
+             stkobj_t a = stk_pop(&vm->data);
+             stkobj_t b = stk_pop(&vm->data);
+             stk_push(&vm->data,stkfloat(a.as_float - b.as_float));
              break;
         }
         case OP_MUL:{
-             float a = stk_pop(&vm->stack);
-             float b = stk_pop(&vm->stack);
-             stk_push(&vm->stack,a * b);
+             stkobj_t a = stk_pop(&vm->data);
+             stkobj_t b = stk_pop(&vm->data);
+             stk_push(&vm->data,stkfloat(a.as_float * b.as_float));
              break;
         }
         case OP_DIV:{
-            float a = stk_pop(&vm->stack);
-            float b = stk_pop(&vm->stack);
-            stk_push(&vm->stack, a / b);
+            stkobj_t a = stk_pop(&vm->data);
+            stkobj_t b = stk_pop(&vm->data);
+            stk_push(&vm->data,stkfloat(a.as_float / b.as_float));
             break;
         }
         case OP_PUSH:{
-                stype_t x = vm->consts.data[cast(uint32_t,DEC_K(inst))];
-                stk_push(&vm->stack,x);
+                stkobj_t x = vm->consts.data[cast(uint32_t,DEC_K(inst))];
+                stk_push(&vm->data,x);
                 break;
         }
         case OP_POP:{
-            stk_pop(&vm->stack);
+            stk_pop(&vm->data);
             break;
         }
         case OP_SWAP:{
-            stype_t a = stk_pop(&vm->stack);
-            stype_t b = stk_pop(&vm->stack);
-            stk_push(&vm->stack,a);
-            stk_push(&vm->stack,b);
+            stkobj_t a = stk_pop(&vm->data);
+            stkobj_t b = stk_pop(&vm->data);
+            stk_push(&vm->data,a);
+            stk_push(&vm->data,b);
             break;
         }
         case OP_DUP:{
-            stype_t x = stk_pop(&vm->stack);
-            stk_push(&vm->stack,x);
-            stk_push(&vm->stack,x);
+            stkobj_t x = stk_pop(&vm->data);
+            stk_push(&vm->data,x);
+            stk_push(&vm->data,x);
             break;
         }
         case OP_OVER:{
-            stype_t a = stk_pop(&vm->stack);
-            stype_t b = stk_pop(&vm->stack);
+            stkobj_t a = stk_pop(&vm->data);
+            stkobj_t b = stk_pop(&vm->data);
 
-            stk_push(&vm->stack,b);
-            stk_push(&vm->stack,a);
-            stk_push(&vm->stack,b);
+            stk_push(&vm->data,b);
+            stk_push(&vm->data,a);
+            stk_push(&vm->data,b);
             break;
         }
         case OP_LROT:{
-            stype_t tmp = vm->stack.data[vm->stack.top - 2];
-            vm->stack.data[vm->stack.top - 2] = vm->stack.data[vm->stack.top - 1];
-            vm->stack.data[vm->stack.top - 1] = vm->stack.data[vm->stack.top];
-            vm->stack.data[vm->stack.top] = tmp;
+            stkobj_t tmp = vm->data.data[vm->data.sp - 3];
+            vm->data.data[vm->data.sp - 3] = vm->data.data[vm->data.sp - 2];
+            vm->data.data[vm->data.sp - 2] = vm->data.data[vm->data.sp - 1];
+            vm->data.data[vm->data.sp - 1] = tmp;
             break;
         }
         case OP_RROT:{
-            // 1 2 2 -> 2 1 2
-            // a b c -> c a b
-            stype_t tmp = vm->stack.data[vm->stack.top];
-            vm->stack.data[vm->stack.top] = vm->stack.data[vm->stack.top - 1];
-            vm->stack.data[vm->stack.top - 1] = vm->stack.data[vm->stack.top - 2];
-            vm->stack.data[vm->stack.top - 2] = tmp;
+            stkobj_t tmp = vm->data.data[vm->data.sp - 1];
+            vm->data.data[vm->data.sp - 1] = vm->data.data[vm->data.sp - 2];
+            vm->data.data[vm->data.sp - 2] = vm->data.data[vm->data.sp - 3];
+            vm->data.data[vm->data.sp - 3] = tmp;
             break;
         }
         case OP_JUMP:{
-            stype_t x = vm->consts.data[cast(uint32_t,DEC_K(inst))];
-            vm->ip += (int)x - 1;
+            stkobj_t x = vm->consts.data[cast(uint32_t,DEC_K(inst))];
+            vm->ip += (int32_t)x.as_int - 1;
             break;
         }
         case OP_HOP:{
-            stype_t c = stk_pop(&vm->stack);
-            if(c) vm->ip++;
+            stkobj_t c = stk_pop(&vm->data);
+            if(c.as_uint) vm->ip++;
             break;
         }
         case OP_GT:{
-            stype_t a = stk_pop(&vm->stack);
-            stype_t b = stk_pop(&vm->stack);
-            stk_push(&vm->stack,a > b);
+            stkobj_t a = stk_pop(&vm->data);
+            stkobj_t b = stk_pop(&vm->data);
+            stk_push(&vm->data,stkuint(a.as_float > b.as_float));
+            break;
+        }
+        case OP_LT:{
+            stkobj_t a = stk_pop(&vm->data);
+            stkobj_t b = stk_pop(&vm->data);
+            stk_push(&vm->data,stkuint(a.as_float < b.as_float));
+            break;
+        }
+        case OP_GE:{
+            stkobj_t a = stk_pop(&vm->data);
+            stkobj_t b = stk_pop(&vm->data);
+            stk_push(&vm->data,stkuint(a.as_float >= b.as_float));
+            break;
+        }
+        case OP_LE:{
+            stkobj_t a = stk_pop(&vm->data);
+            stkobj_t b = stk_pop(&vm->data);
+            stk_push(&vm->data,stkuint(a.as_float <= b.as_float));
+            break;
+
+        }
+        case OP_EQ:{
+            stkobj_t a = stk_pop(&vm->data);
+            stkobj_t b = stk_pop(&vm->data);
+            stk_push(&vm->data,stkuint(a.as_float == b.as_float));
+            break;
+        }
+        case OP_NEQ:{
+            stkobj_t a = stk_pop(&vm->data);
+            stkobj_t b = stk_pop(&vm->data);
+            stk_push(&vm->data,stkuint(a.as_float != b.as_float));
             break;
         }
         case OP_POW:{
-            stype_t a = stk_pop(&vm->stack);
-            stype_t b = stk_pop(&vm->stack);
-            stk_push(&vm->stack, powf(a, b));
+            stkobj_t a = stk_pop(&vm->data);
+            stkobj_t b = stk_pop(&vm->data);
+            stk_push(&vm->data, stkfloat(powf(a.as_float, b.as_float)));
             break;
         }
         case OP_SQR:{
-            stype_t x = stk_pop(&vm->stack);
-            x = x * x;
-            stk_push(&vm->stack, x);
+            stkobj_t x = stk_pop(&vm->data);
+            x.as_float = x.as_float * x.as_float;
+            stk_push(&vm->data, x);
             break;
         }
         case OP_SQRT:{
-            stype_t x = stk_pop(&vm->stack);
-            x = sqrtf(x);
-            stk_push(&vm->stack,x);
+            stkobj_t x = stk_pop(&vm->data);
+            x.as_float = sqrtf(x.as_float);
+            stk_push(&vm->data,x);
+            break;
+        }
+        case OP_CALL:{
+            stkobj_t ip = vm->consts.data[cast(uint32_t,DEC_K(inst))];
+            stk_push(&vm->ret,stkuint(vm->ip));
+            vm->ip += (int)ip.as_int - 1;
+            break;
+        }
+        case OP_RET:{
+            vm->ip = stk_pop(&vm->ret).as_uint;
             break;
         }
         case OP_ECHO:{
-            stype_t x = vm->consts.data[cast(uint32_t,DEC_K(inst))];
-            if ((int)x == 0) printf("%.02f\n",vm->stack.data[vm->stack.top]);
+            stkobj_t x = vm->consts.data[cast(uint32_t,DEC_K(inst))];
+            if (x.as_uint == 0) printf("%.02f\n",stk_get(&vm->data,-1).as_float);
             else{
-                printf("|");
-                for(int i = vm->stack.top - (x - 1); i <= vm->stack.top ;i++) printf("%.02f ",vm->stack.data[i]);
+                printf("|>");
+                for(uint i = 1; i < x.as_uint ;i++) printf("%.02f ",stk_get(&vm->data,-i).as_float);
                 printf("\n");
             }
             fflush(stdout);
             break;
         }
         case OP_PRINT:{
-            printf("%.02f\n",vm->stack.data[vm->stack.top]);
+            printf("%.02f\n",vm->data.data[vm->data.sp].as_float);
             break;
         }
         default:

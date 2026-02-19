@@ -10,15 +10,17 @@
 #include "sblstack.h"
 
 typedef struct sbl_binh{
-    char magic[2];  // SB
-    uint16_t insts;  //
-    uint32_t ctb_off;
+    char        magic[2];  // SB
+    uint16_t    insts;
+    uint32_t    ctb_off;
+    uint32_t    start;
 }sblbinh_t;
 
 typedef struct sblvm{
     sblbinh_t   bin_info;
 
-    stack_t     stack;
+    stack_t     data;
+    stack_t     ret;
     ilist_t     insts;
     constabl_t  consts;
 

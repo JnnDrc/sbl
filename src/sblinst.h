@@ -29,7 +29,7 @@ typedef INSTRUCTION inst_t;
 
 #define MAKE_OP(op)         ((op) << K_BITS)
 #define MAKE_OPK(op,k)      (MAKE_OP(op) | ((k) & BM22))
-#define MAKE_OPAB(op,a,b)   (MAKE_OP(op) | (((a) & BM11) << AB_BITS) | ((b) << AB_BITS))
+#define MAKE_OPAB(op,a,b)   (MAKE_OP(op) | (((a) & BM11) << AB_BITS) | ((b && BM11)))
 
 #define DEC_OP(i) ((inst_t)(i) >> K_BITS)
 #define DEC_K(i)  ((inst_t)(i) & BM22)

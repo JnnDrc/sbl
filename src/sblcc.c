@@ -39,11 +39,11 @@ int sblc_compile_line(char* line, ilist_t* il, constabl_t* ct, lablist_t* ll){
         return 0;
     }
 
-    char* op = strtok(line," ");
-    char*   kas = strtok(NULL," ");
-    stype_t ka = atoi(kas);
-    int16_t b  = atoi(strtok(NULL," "));
-    (void)b;
+    char*    op  = strtok(line," ");
+    char*    kas = strtok(NULL," ");
+    stkobj_t ka  = stkfloat(atof(kas));
+    int16_t  b   = atoi(strtok(NULL," "));
+    (void) b;
 
     if      (streq(op,"add")) ilist_add(il,MAKE_OP(OP_ADD));
     else if (streq(op,"sub")) ilist_add(il,MAKE_OP(OP_SUB));
@@ -71,7 +71,7 @@ int sblc_compile_line(char* line, ilist_t* il, constabl_t* ct, lablist_t* ll){
             // k is label
             int l = label_find(ll,kas);
             if (l < 0) return -2;
-            int jmp = l - il->size;
+            stkobj_t jmp = stkint(l - il->size);
 
             int ci = const_find(ct,jmp);
             if (ci < 0) ci = const_add(ct, jmp);
@@ -88,6 +88,23 @@ int sblc_compile_line(char* line, ilist_t* il, constabl_t* ct, lablist_t* ll){
     else if (streq(op,"pow"))  ilist_add(il,MAKE_OP(OP_POW));
     else if (streq(op,"sqr"))  ilist_add(il,MAKE_OP(OP_SQR));
     else if (streq(op,"sqrt")) ilist_add(il,MAKE_OP(OP_SQRT));
+    else if (streq(op,"call")){
+        if (isdigit(kas[0])){
+            int ci = const_find(ct,ka);
+            if (ci < 0) ci = const_add(ct, ka);
+            ilist_add(il,MAKE_OPK(OP_CALL,ci));
+        }else {
+            // k is label
+            int l = label_find(ll,kas);
+            if (l < 0) return -2;
+            stkobj_t jmp = stkint(l - il->size);
+
+            int16_t ci = const_find(ct,jmp);
+            if (ci < 0) ci = const_add(ct, jmp);
+            ilist_add(il,MAKE_OPK(OP_CALL,ci));
+        }
+    }
+    else if (streq(op,"ret"))  ilist_add(il,MAKE_OP(OP_RET));
     else if (streq(op,"echo")){
         int ci = const_find(ct,ka);
         if (ci < 0) ci = const_add(ct,ka);
@@ -97,7 +114,7 @@ int sblc_compile_line(char* line, ilist_t* il, constabl_t* ct, lablist_t* ll){
     else{
         int i = 0;
         if (isdigit(op[i])){
-            int n = atoi(op);
+            stkobj_t n = stkfloat(atof(op));
             int ci = const_find(ct,n);
             if (ci < 0) ci = const_add(ct, n);
             ilist_add(il, MAKE_OPK(OP_PUSH,ci));
@@ -106,12 +123,15 @@ int sblc_compile_line(char* line, ilist_t* il, constabl_t* ct, lablist_t* ll){
     return 0;
 }
 
-void sblc_emit(FILE* fp, ilist_t* il, constabl_t* ct){
+void sblc_emit(FILE* fp, ilist_t* il, constabl_t* ct, lablist_t* ll){
     // header
     fwrite("SB",2,1,fp);                            // magic number
     fwrite(&il->size,sizeof(uint16_t),1,fp);        // amount of instructions
     uint32_t ctoff = il->size * sizeof(*il->data);  // const table offset
     fwrite(&ctoff,sizeof(ctoff),1,fp);
+    int32_t start = label_find(ll,"main");          // start address
+    if (start < 0) start = 0;
+    fwrite(&start,sizeof(uint32_t),1,fp);
 
     // instructions
     fwrite(il->data,sizeof(*il->data),il->size,fp);

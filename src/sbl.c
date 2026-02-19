@@ -35,7 +35,10 @@ int main(int argc, char* argv[]){
         uint16_t op = DEC_OP(inst);
         if (HASF(flags,F_DEBUG)){
             printf("ip: %zu | op: %s \n",vm.ip,sblo_op_string(op));
-            stk_trace(&vm.stack);
+            printf("data:   ");
+            stk_trace(&vm.data);
+            printf("return: ");
+            stk_trace(&vm.ret);
             fflush(stdout);
             switch(getc(stdin)){
                 case 'q':
