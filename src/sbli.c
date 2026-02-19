@@ -8,8 +8,7 @@
 #include "sblinst.h"
 #include "sblconst.h"
 #include "sblvm.h"
-
-#define cast(T, v) (T)(v)
+#include "sbldef.h"
 
 int main(int argc, char* argv[]){
     if(argc < 2){
@@ -26,25 +25,25 @@ int main(int argc, char* argv[]){
     sblvm_t vm;
     sblvm_load(&vm,in);
 
-    printf("INFO--------------\n");
+    printf("INFO-----------------------------------*\n");
     printf("SBL Bytecode Binary\n");
     printf("%hu instructions\n",vm.bin_info.insts);
     printf("%hu constants, table at <instructions>+%d\n",vm.consts.size,vm.bin_info.ctb_off);
 
     int width = (int)roundf(1+logf(vm.insts.size)/logf(10.0f));
-    printf("INSTRUCTIONS-------\n");
+    printf("INSTRUCTIONS---------------------------*\n");
     // printf("i: OP   K | A B\n");
     for(int i = 0; i < vm.insts.size; i++){
         uint32_t it = vm.insts.data[i];
         printf("%0*d: (%03d) %s\t    %d (%hu %hu) \n",width,i,DEC_OP(it),sblo_op_string(DEC_OP(it)),cast(uint32_t,DEC_K(it)),cast(uint16_t,DEC_A(it)),cast(uint16_t,DEC_B(it)));
     }
-    printf("CONSTANTS----------\n");
+    printf("CONSTANTS------------------------------*\n");
     // printf("i:    K\n");
     for(int i = 0; i < vm.consts.size; i++){
         float k = vm.consts.data[i];
         printf("%0*d:    %.02f\n",width,i, k);
     }
-    printf("-------------------\n");
+    printf("*--------------------------------------*\n");
     fflush(stdout);
 
     return 0;

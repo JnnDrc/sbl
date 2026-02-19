@@ -4,33 +4,34 @@
 typedef enum sbl_op{
     OP_NONE = 0,    // 0
 
-    OP_ADD  = 1,    // op
-    OP_SUB  = 2,    // op
-    OP_MUL  = 3,    // op
-    OP_DIV  = 4,    // op
+    OP_ADD   = 1,   // op
+    OP_SUB   = 2,   // op
+    OP_MUL   = 3,   // op
+    OP_DIV   = 4,   // op
 
-    OP_PUSH = 5,    // op k
-    OP_POP  = 6,    // op
-    OP_SWAP = 7,    // op
-    OP_DUP  = 8,    // op
-    OP_OVER = 9,    // op
-    OP_LROT = 10,   // op
-    OP_RROT = 11,   // op
+    OP_PUSH  = 5,   // op k
+    OP_POP   = 6,   // op
+    OP_SWAP  = 7,   // op
+    OP_DUP   = 8,   // op
+    OP_OVER  = 9,   // op
+    OP_LROT  = 10,  // op
+    OP_RROT  = 11,  // op
 
-    OP_JUMP = 15,   // op k
-    OP_HOP  = 16,   // op
-    OP_GT   = 20,   // op
-    OP_LT   = 21,   // op
-    OP_GE   = 22,   // op
-    OP_LE   = 23,   // op
-    OP_EQ   = 24,   // op
-    OP_NEQ  = 25,   // op
+    OP_JUMP  = 15,  // op k
+    OP_HOP   = 16,  // op
+    OP_GT    = 20,  // op
+    OP_LT    = 21,  // op
+    OP_GE    = 22,  // op
+    OP_LE    = 23,  // op
+    OP_EQ    = 24,  // op
+    OP_NEQ   = 25,  // op
 
-    OP_POW  = 30,   // op
-    OP_SQR  = 31,   // op
-    OP_SQRT = 32,   // op
+    OP_POW   = 30,   // op
+    OP_SQR   = 31,   // op
+    OP_SQRT  = 32,   // op
 
-    OP_ECHO = 80    // op k
+    OP_ECHO  = 80,  // op k
+    OP_PRINT = 81,  // op
 }sbl_op_n;
 
 char* sblo_op_string(sbl_op_n op);

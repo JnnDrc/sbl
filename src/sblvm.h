@@ -7,18 +7,7 @@
 
 #include "sblconst.h"
 #include "sblinst.h"
-
-#define STACK_SIZE 512
-#define STACK_TYPE float
-typedef STACK_TYPE stype_t ;
-typedef struct stack {
-    int32_t top;
-    stype_t data[STACK_SIZE];
-}stack_t;
-
-void stk_push(stack_t *s,float v);
-float stk_pop(stack_t *s);
-void stk_trace(stack_t* s);
+#include "sblstack.h"
 
 typedef struct sbl_binh{
     char magic[2];  // SB
@@ -39,5 +28,8 @@ typedef struct sblvm{
 
 #define SBL_ERR_NOT_SLB 1
 int sblvm_load(sblvm_t* vm, FILE* fp);
+
+#define EXEC_ERR_UNKNOWN_OPC 1
+int sblvm_exec(sblvm_t* vm);
 
 #endif /* _SBLVM_H */

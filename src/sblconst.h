@@ -3,14 +3,17 @@
 
 #include <stdint.h>
 
-#define CONST_TABLE_SIZE 1024
+#define CONST_TABL_INIT_CAP 128
 typedef struct const_table{
-    uint16_t   size;
-    float      data[1024];
+    uint16_t size;
+    uint16_t capacity;
+    float*   data;
 }constabl_t;
 
+int constabl_init(constabl_t* ct);
 
+#define CONST_NOT_FOUND -1
 int const_find(constabl_t* ct, float f);
-int const_add(constabl_t* ct, float f);
+int const_add(constabl_t* ct,  float f);
 
 #endif /* _SBLCOST_H */

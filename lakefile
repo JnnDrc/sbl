@@ -2,7 +2,7 @@ local cc = "gcc"
 local cflags = " -Wall " .. " -Wextra" .. " -g " .. "-I./src "
 
 local src_dir  = "src/"
-local files = {"sblinst.c", "sblconst.c", "sblop.c", "sblvm.c"}
+local files = {"sblinst.c", "sblconst.c", "sblop.c", "sblvm.c", "sblstack.c"}
 
 local src = ""
 for i, s in ipairs(files) do
