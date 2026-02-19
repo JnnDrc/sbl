@@ -1,8 +1,9 @@
 push 1
 dup
 over
+:LOOP
 add
 echo
 dup
 -rot
-jump -4
+jump LOOP

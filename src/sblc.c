@@ -32,8 +32,10 @@ int main(int argc, char* argv[]){
 
     constabl_t ct;
     ilist_t    il;
+    lablist_t ll;
     constabl_init(&ct);
     ilist_init(&il);
+    lablist_init(&ll);
     
     char line[128] = {0};
     size_t l = 0;
@@ -42,10 +44,15 @@ int main(int argc, char* argv[]){
         if(strlen(line) == 0) continue;
         if(line[0] == '#') continue;
         
-        int r = sblc_compile_line(line,&il,&ct);
-        if (r){
-            fprintf(stderr,"ERROR: unknown operation at line %zu",l);
-            return -1;
+        int r = sblc_compile_line(line,&il,&ct,&ll);
+        switch(r){
+            case 0: break;
+            case -1:
+                    fprintf(stderr,"ERROR: unknown operation at line %zu",l);
+                    return -1;
+            case -2:
+                    fprintf(stderr,"ERROR: Unknown label at %zu",l);
+                    return -1;
         }
     }
     ilist_add(&il,MAKE_OP(OP_NONE));

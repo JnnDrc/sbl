@@ -13,12 +13,15 @@ int main(void){
     vm.ip = 0;
     vm.halt = false;
 
+    lablist_t ll;
+    lablist_init(&ll);
+
     char line[128];
     for(;;){
         printf("~ ");
         fgets(line,sizeof(line),stdin);
         
-        sblc_compile_line(line,&vm.insts,&vm.consts);
+        sblc_compile_line(line,&vm.insts,&vm.consts,&ll);
         sblvm_exec(&vm);
         printf("\\-> ");
         stk_trace(&vm.stack);

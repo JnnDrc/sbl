@@ -4,6 +4,8 @@
 #include <string.h>
 #include <ctype.h>
 
+#include "sblcc.h"
+
 #include "sblop.h"
 #include "sblconst.h"
 #include "sblinst.h"
@@ -26,12 +28,20 @@ static void trim(char* str){
     }
 }
 
-int sblc_compile_line(char* line, ilist_t* il, constabl_t* ct){
+int sblc_compile_line(char* line, ilist_t* il, constabl_t* ct, lablist_t* ll){
     trim(line);
-    if(strlen(line) <= 0) return 0;
-    if(line[0] == '#')    return 0;
+    if(strlen(line) <= 0)   return 0;
+    if(line[0] == COMMENT)  return 0;
+
+    if(line[0] == LABEL){
+        char* l = line + 1;
+        if (label_find(ll,l) < 0) label_add(ll,label(l,il->size));
+        return 0;
+    }
+
     char* op = strtok(line," ");
-    stype_t ka = atoi(strtok(NULL," "));
+    char*   kas = strtok(NULL," ");
+    stype_t ka = atoi(kas);
     int16_t b  = atoi(strtok(NULL," "));
     (void)b;
 
@@ -52,9 +62,21 @@ int sblc_compile_line(char* line, ilist_t* il, constabl_t* ct){
     else if (streq(op,"+rot")) ilist_add(il,MAKE_OP(OP_LROT));
     else if (streq(op,"-rot")) ilist_add(il,MAKE_OP(OP_RROT));
     else if (streq(op,"jump")){
-        int ci = const_find(ct,ka);
-        if (ci < 0) ci = const_add(ct, ka);
-        ilist_add(il,MAKE_OPK(OP_JUMP,ci));
+        // k is number
+        if (isdigit(kas[0])){
+            int ci = const_find(ct,ka);
+            if (ci < 0) ci = const_add(ct, ka);
+            ilist_add(il,MAKE_OPK(OP_JUMP,ci));
+        }else {
+            // k is label
+            int l = label_find(ll,kas);
+            if (l < 0) return -2;
+            int jmp = l - il->size;
+
+            int ci = const_find(ct,jmp);
+            if (ci < 0) ci = const_add(ct, jmp);
+            ilist_add(il,MAKE_OPK(OP_JUMP,ci));
+        }
     } 
     else if (streq(op,"hop"))  ilist_add(il,MAKE_OP(OP_HOP));
     else if (streq(op,"gt"))   ilist_add(il,MAKE_OP(OP_GT));
@@ -79,7 +101,7 @@ int sblc_compile_line(char* line, ilist_t* il, constabl_t* ct){
             int ci = const_find(ct,n);
             if (ci < 0) ci = const_add(ct, n);
             ilist_add(il, MAKE_OPK(OP_PUSH,ci));
-        }else return 1;
+        }else return -1;
     }
     return 0;
 }
@@ -95,4 +117,35 @@ void sblc_emit(FILE* fp, ilist_t* il, constabl_t* ct){
     fwrite(il->data,sizeof(*il->data),il->size,fp);
     // const table
     fwrite(ct->data,sizeof(*ct->data),ct->size,fp);
+}
+
+label_t label(char* id, uint32_t line){
+    return (label_t){.label = strdup(id), .line = line};
+}
+
+int lablist_init(lablist_t* ll){
+    ll->capacity = LABLIST_INIT_CAPACITY;
+    ll->size = 0;
+    ll->data = calloc(ll->capacity,sizeof(label_t));
+    if(!ll->data) return -1;
+
+    return 0;
+}
+
+int label_add(lablist_t* ll, label_t l){
+    if (ll->size >= ll->capacity){
+        uint32_t ncap = ll->capacity * 2;
+        label_t* ndata = calloc(ncap, sizeof(label_t));
+        if(!ndata) return -1;
+        memcpy(ndata,ll->data,ll->size);
+        free(ll->data);
+        ll->data = ndata;
+        ll->capacity = ncap;
+    }
+    ll->data[ll->size++] = l;
+    return 0;
+}
+int32_t  label_find(lablist_t* ll, char* id){
+    for (uint i = 0; i < ll->size; i++) if(streq(ll->data[i].label,id)) return ll->data[i].line;
+    return -1;
 }
