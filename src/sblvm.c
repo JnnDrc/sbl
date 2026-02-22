@@ -233,17 +233,6 @@ int sblvm_exec(sblvm_t* vm){
             vm->ip = stk_pop(&vm->call).as.off;
             break;
         }
-        case OP_ECHO:{
-            sblval_t x = vm->consts.data[cast(uint32_t,DEC_K(inst))];
-            if (x.as.off == 0) printf("%.02f\n",stk_get(&vm->data,-1).as.num);
-            else{
-                printf("|>");
-                for(int i = 1; i < x.as.off ;i++) printf("%.02f ",stk_get(&vm->data,-i).as.num);
-                printf("\n");
-            }
-            fflush(stdout);
-            break;
-        }
         case OP_TOP:{
             printf("%.02f\n",vm->data.data[vm->data.sp - 1].as.num);
             break;

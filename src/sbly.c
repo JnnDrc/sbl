@@ -8,18 +8,18 @@
 #include "sblval.h"
 #include "sblop.h"
 
-static char* tokk_string(tokind_n tk){
-    switch(tk){
-        case TOK_NONE:          return "NONE";
-        case TOK_NUMLIT:        return "NUMLIT";
-        case TOK_STRLIT:        return "STRLIT";
-        case TOK_LABEL_DEF:     return "LABEL_DEF";
-        case TOK_IDENT:         return "IDENT";
-        case TOK_OP:            return "OP";
-      break;
-    }
-    return "UNKNOWN";
-}
+// static char* tokk_string(tokind_n tk){
+//     switch(tk){
+//         case TOK_NONE:          return "NONE";
+//         case TOK_NUMLIT:        return "NUMLIT";
+//         case TOK_STRLIT:        return "STRLIT";
+//         case TOK_LABEL_DEF:     return "LABEL_DEF";
+//         case TOK_IDENT:         return "IDENT";
+//         case TOK_OP:            return "OP";
+//       break;
+//     }
+//     return "UNKNOWN";
+// }
 
 lexer_t lexer(char* src, size_t len){
     return (lexer_t){.src = src, .len = len,.pos = 0, .line = 1, .column = 1};

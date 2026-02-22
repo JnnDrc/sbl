@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+#include <assert.h>
 
 #include "sblcc.h"
 
@@ -101,12 +102,6 @@ int sblc_compile_line(char* line, ilist_t* il, constabl_t* ct, lablist_t* ll){
         ilist_add(il,MAKE_OPK(OP_CALL,ci));
     }
     else if (streq(op,"ret"))  ilist_add(il,MAKE_OP(OP_RET));
-    else if (streq(op,"echo")){
-        sblval_t ec = sblint(ka.as.num);
-        int ci = const_find(ct,ec);
-        if (ci < 0) ci = const_add(ct,ec);
-        ilist_add(il,MAKE_OPK(OP_ECHO,ci));
-    }
     else if (streq(op,"top") || streq(op,".")) ilist_add(il,MAKE_OP(OP_TOP));
     else{
         int i = 0;

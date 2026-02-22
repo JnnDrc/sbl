@@ -41,8 +41,7 @@ typedef enum sbl_op{
     OP_CALL  = 40,   // op k c[] -> c[ip]
     OP_RET   = 41,   // op   c[ip] -> [ip]
 
-    OP_ECHO  = 80,  // op k [] -> [] (print #k elements)
-    OP_TOP   = 81,  // op
+    OP_TOP   = 80,  // op
 }sbl_op_n;
 
 char* sblo_op_string(sbl_op_n op);

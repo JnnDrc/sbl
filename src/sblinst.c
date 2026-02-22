@@ -43,6 +43,7 @@ inst_t iobj_make(iobj_t io){
         case INST_OP:   return MAKE_OP(io.op);
         case INST_OPK:  return MAKE_OPK(io.op,io.arg.k);
         case INST_OPAB: return MAKE_OPAB(io.op, io.arg.ab.a,io.arg.ab.b);
+        default:        return 0;
     }
 }
 
