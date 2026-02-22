@@ -1,35 +1,25 @@
 #include <string.h>
 #include <ctype.h>
 #include <stdlib.h>
+#include <stdio.h>
+
+#include "sbly.h"
 
 #include "sblval.h"
-#include "sblop.c"
+#include "sblop.h"
 
-typedef enum token_kind{
-    TOK_NONE,       // nothing, eof
-    TOK_NUMLIT,     // number literal
-    TOK_STRLIT,     // string literal (reserved for future)
-
-    TOK_LABEL_DEF,  // :foo
-    TOK_IDENT,      // foo
-    TOK_OP,         // builting operator ("keyword") (implement later)
-}tokind_n;
-
-typedef struct token{
-    tokind_n kind;
-    const char* start;
-    size_t len;
-    sblnum_t number;
-    int16_t  op;
-    uint32_t line, column;
-}token_t;
-
-typedef struct lexer{
-    const char* src;
-    size_t pos;
-    size_t len;
-    uint32_t line, column;
-}lexer_t;
+static char* tokk_string(tokind_n tk){
+    switch(tk){
+        case TOK_NONE:          return "NONE";
+        case TOK_NUMLIT:        return "NUMLIT";
+        case TOK_STRLIT:        return "STRLIT";
+        case TOK_LABEL_DEF:     return "LABEL_DEF";
+        case TOK_IDENT:         return "IDENT";
+        case TOK_OP:            return "OP";
+      break;
+    }
+    return "UNKNOWN";
+}
 
 lexer_t lexer(char* src, size_t len){
     return (lexer_t){.src = src, .len = len,.pos = 0, .line = 1, .column = 1};
@@ -105,13 +95,12 @@ static token_t lex_ident(lexer_t *l){
         t.kind = TOK_LABEL_DEF;
     }else{
         int32_t o = sblo_isopn(t.start,t.len);
-        if (o != -1){
+        if (o){
             t.kind = TOK_OP;
             t.op = o;
         }
         else t.kind = TOK_IDENT;
     }
-
     return t;
 }
 

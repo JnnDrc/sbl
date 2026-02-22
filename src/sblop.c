@@ -113,5 +113,5 @@ int32_t sblo_isopn(const char* op, size_t len){
     else if (streqn(op,"ret",len))   return OP_RET;
     else if (streqn(op,"echo",len))  return OP_ECHO;
     else if (streqn(op,"top",len))   return OP_TOP;
-    else return -1;
+    else return OP_NONE;
 }
