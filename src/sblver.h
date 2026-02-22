@@ -2,7 +2,7 @@
 
 // SBL VERSION -----------------------------------------------------------------
 #define SBL_MAJOR 0
-#define SBL_MINOR 1
+#define SBL_MINOR 3
 // SBL VERSION -----------------------------------------------------------------
 
 #include <stdint.h>

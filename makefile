@@ -1,5 +1,5 @@
 CC := gcc
-CFLAGS := -Wall -Wextra -I./src -O3
+CFLAGS := -Wall -Wextra -Wno-type-limits -I./src -O3
 
 MYCFLAGS ?=
 

@@ -10,4 +10,4 @@ ret
 push 3
 push 2
 call sqrsum
-echo
+top

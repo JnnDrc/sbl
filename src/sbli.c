@@ -41,8 +41,21 @@ int main(int argc, char* argv[]){
     printf("CONSTANTS------------------------------*\n");
     // printf("i:    K\n");
     for(uint i = 0; i < vm.consts.size; i++){
-        stkobj_t k = vm.consts.data[i];
-        printf("%0*d:    %.02f | %d\n",width,i, k.as_float,k.as_int);
+        sblval_t k = vm.consts.data[i];
+        switch(k.type){
+            case SBL_VAL_NUM:
+                printf("%0*d:    num %.02f\n",width,i, k.as.num);
+                break;
+            case SBL_VAL_INT:
+                printf("%0*d:    int %d\n",width,i, k.as.off);
+                break;
+            case SBL_VAL_PTR:
+                printf("%0*d:    ptr %p\n",width,i, k.as.ptr);
+                break;
+            default:
+                fprintf(stderr, "ERROR: Unknown value on constants table");
+                return 1;
+        }
     }
     printf("*--------------------------------------*\n");
     fflush(stdout);

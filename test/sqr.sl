@@ -1,3 +1,3 @@
 3
 sqr
-print
+top

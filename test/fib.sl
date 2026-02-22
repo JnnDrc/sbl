@@ -3,7 +3,7 @@ dup
 over
 :LOOP
 add
-echo
+top
 dup
 -rot
 dup

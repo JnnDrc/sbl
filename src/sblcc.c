@@ -9,76 +9,70 @@
 #include "sblop.h"
 #include "sblconst.h"
 #include "sblinst.h"
-#include "sblstack.h"
 #include "sblvm.h"
 #include "sbldef.h"
 
+#include "utils.h"
 
-static void trim(char* str){
-    if(!str) return;
-    size_t s = 0, e = strlen(str) - 1;
-    while(isspace(str[s])){
-        s++;
+int sblc_label_line(char* line, size_t linenum, lablist_t* ll){
+    strtrim(line);
+    if(strlen(line) <= 0)   return -1;
+    if(line[0] == COMMENT)  return -1;
+    if(line[0] == LABEL){
+        char *l = line+1;
+        char* lab = strtok(l," ");
+        if (label_find(ll,lab) < 0) label_add(ll,label(lab,linenum));
+        return 1;
     }
-    while(e > s && isspace(str[e])){
-        e--;
-    }
-    if(s > 0 || e < (strlen(str) - 1)){
-        memmove(str,str+s,e - s + 1);
-        str[e - s + 1] = '\0';
-    }
+    return 0;
 }
 
 int sblc_compile_line(char* line, ilist_t* il, constabl_t* ct, lablist_t* ll){
-    trim(line);
+    strtrim(line);
     if(strlen(line) <= 0)   return 0;
-    if(line[0] == COMMENT)  return 0;
-
-    if(line[0] == LABEL){
-        char* l = line + 1;
-        if (label_find(ll,l) < 0) label_add(ll,label(l,il->size));
-        return 0;
-    }
+    if(line[0] == COMMENT || line[0] == LABEL)  return 0;
 
     char*    op  = strtok(line," ");
     char*    kas = strtok(NULL," ");
-    stkobj_t ka  = stkfloat(atof(kas));
+    sblval_t ka  = sblnum(atof(kas));
     int16_t  b   = atoi(strtok(NULL," "));
     (void) b;
 
-    if      (streq(op,"add")) ilist_add(il,MAKE_OP(OP_ADD));
-    else if (streq(op,"sub")) ilist_add(il,MAKE_OP(OP_SUB));
-    else if (streq(op,"mul")) ilist_add(il,MAKE_OP(OP_MUL));
-    else if (streq(op,"div")) ilist_add(il,MAKE_OP(OP_DIV));
-    else if (streq(op,"mod")) ilist_add(il,MAKE_OP(OP_MOD));
+    if      (streq(op,"add") || streq(op,"+")) ilist_add(il,MAKE_OP(OP_ADD));
+    else if (streq(op,"sub") || streq(op,"-")) ilist_add(il,MAKE_OP(OP_SUB));
+    else if (streq(op,"mul") || streq(op,"*")) ilist_add(il,MAKE_OP(OP_MUL));
+    else if (streq(op,"div") || streq(op,"/")) ilist_add(il,MAKE_OP(OP_DIV));
+    else if (streq(op,"mod") || streq(op,"%")) ilist_add(il,MAKE_OP(OP_MOD));
+    else if (streq(op,"inc") || streq(op,"++")) ilist_add(il,MAKE_OP(OP_INC));
+    else if (streq(op,"dec") || streq(op,"--")) ilist_add(il,MAKE_OP(OP_DEC));
+    else if (streq(op,"sum")) ilist_add(il,MAKE_OP(OP_SUM));
+    else if (streq(op,"prod")) ilist_add(il,MAKE_OP(OP_PROD));
     else if (streq(op,"push")){
         int ci = const_find(ct,ka);
         if (ci < 0) ci = const_add(ct, ka);
         ilist_add(il, MAKE_OPK(OP_PUSH,ci));
     }
     else if (streq(op,"pop"))  ilist_add(il,MAKE_OP(OP_POP));
-    else if (streq(op,"swap")) ilist_add(il,MAKE_OP(OP_SWAP));
+    else if (streq(op,"swap") || streq(op,"<>")) ilist_add(il,MAKE_OP(OP_SWAP));
     else if (streq(op,"dup"))  ilist_add(il,MAKE_OP(OP_DUP));
     else if (streq(op,"over")) ilist_add(il,MAKE_OP(OP_OVER));
     else if (streq(op,"rot"))  ilist_add(il,MAKE_OP(OP_LROT));
     else if (streq(op,"+rot")) ilist_add(il,MAKE_OP(OP_LROT));
     else if (streq(op,"-rot")) ilist_add(il,MAKE_OP(OP_RROT));
     else if (streq(op,"jump")){
+        sblval_t jmp;
         // k is number
         if (isdigit(kas[0])){
-            int ci = const_find(ct,ka);
-            if (ci < 0) ci = const_add(ct, ka);
-            ilist_add(il,MAKE_OPK(OP_JUMP,ci));
+            jmp = sblint(ka.as.num);
         }else {
             // k is label
             int l = label_find(ll,kas);
             if (l < 0) return -2;
-            stkobj_t jmp = stkint(l - il->size);
-
-            int ci = const_find(ct,jmp);
-            if (ci < 0) ci = const_add(ct, jmp);
-            ilist_add(il,MAKE_OPK(OP_JUMP,ci));
+            jmp = sblint(l - il->size);
         }
+        int ci = const_find(ct,jmp);
+        if (ci < 0) ci = const_add(ct, jmp);
+        ilist_add(il,MAKE_OPK(OP_JUMP,ci));
     } 
     else if (streq(op,"hop"))  ilist_add(il,MAKE_OP(OP_HOP));
     else if (streq(op,"gt"))   ilist_add(il,MAKE_OP(OP_GT));
@@ -86,41 +80,48 @@ int sblc_compile_line(char* line, ilist_t* il, constabl_t* ct, lablist_t* ll){
     else if (streq(op,"ge"))   ilist_add(il,MAKE_OP(OP_GE));
     else if (streq(op,"le"))   ilist_add(il,MAKE_OP(OP_LE));
     else if (streq(op,"eq"))   ilist_add(il,MAKE_OP(OP_EQ));
-    else if (streq(op,"neq"))  ilist_add(il,MAKE_OP(OP_NEQ));
+    else if (streq(op,"ne"))   ilist_add(il,MAKE_OP(OP_NE));
     else if (streq(op,"pow"))  ilist_add(il,MAKE_OP(OP_POW));
     else if (streq(op,"sqr"))  ilist_add(il,MAKE_OP(OP_SQR));
     else if (streq(op,"sqrt")) ilist_add(il,MAKE_OP(OP_SQRT));
     else if (streq(op,"call")){
+        sblval_t jmp;
+        // k is number
         if (isdigit(kas[0])){
-            int ci = const_find(ct,ka);
-            if (ci < 0) ci = const_add(ct, ka);
-            ilist_add(il,MAKE_OPK(OP_CALL,ci));
+            jmp = sblint(ka.as.num);
         }else {
             // k is label
             int l = label_find(ll,kas);
             if (l < 0) return -2;
-            stkobj_t jmp = stkint(l - il->size);
-
-            int16_t ci = const_find(ct,jmp);
-            if (ci < 0) ci = const_add(ct, jmp);
-            ilist_add(il,MAKE_OPK(OP_CALL,ci));
+            jmp = sblint(l - il->size);
         }
+        int ci = const_find(ct,jmp);
+        if (ci < 0) ci = const_add(ct, jmp);
+        ilist_add(il,MAKE_OPK(OP_CALL,ci));
     }
     else if (streq(op,"ret"))  ilist_add(il,MAKE_OP(OP_RET));
     else if (streq(op,"echo")){
-        int ci = const_find(ct,ka);
-        if (ci < 0) ci = const_add(ct,ka);
+        sblval_t ec = sblint(ka.as.num);
+        int ci = const_find(ct,ec);
+        if (ci < 0) ci = const_add(ct,ec);
         ilist_add(il,MAKE_OPK(OP_ECHO,ci));
     }
-    else if (streq(op,"print")) ilist_add(il,MAKE_OP(OP_PRINT));
+    else if (streq(op,"top") || streq(op,".")) ilist_add(il,MAKE_OP(OP_TOP));
     else{
         int i = 0;
         if (isdigit(op[i])){
-            stkobj_t n = stkfloat(atof(op));
+            sblval_t n = sblnum(atof(op));
             int ci = const_find(ct,n);
             if (ci < 0) ci = const_add(ct, n);
             ilist_add(il, MAKE_OPK(OP_PUSH,ci));
-        }else return -1;
+        }else{
+            int l = label_find(ll,op);
+            if (l < 0) return -2;
+            sblval_t jmp = sblint(l - il->size);
+            int ci = const_find(ct,jmp);
+            if (ci < 0) ci = const_add(ct,jmp);
+            ilist_add(il,MAKE_OPK(OP_CALL,ci));
+        }
     }
     return 0;
 }

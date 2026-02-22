@@ -1,15 +1,47 @@
 // SBL Compiler
 #include <stdio.h>
-#include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
-#include <ctype.h>
 
 #include "sblop.h"
 #include "sblconst.h"
 #include "sblinst.h"
+#include "utils.h"
 
 #include "sblcc.h"
+
+#define MAX_LINE 128
+
+int address_labels(char* buf,size_t size, lablist_t* ll){
+    char line[MAX_LINE] = {0};
+    size_t l = 0;
+    char* cur = buf;
+    char* end = buf + size;
+
+    while(strgets(line,sizeof(line),&cur,end)){
+        int r = sblc_label_line(line,l,ll);
+        if (!r) l++;
+    }
+    return 0;
+}
+
+int compile_file(char* buf,size_t size, ilist_t* il, constabl_t* ct, lablist_t* ll, size_t* ln){
+    char line[MAX_LINE] = {0};
+    size_t l = 0;
+    char* cur = buf;
+    char* end = buf + size;
+
+    while(strgets(line,sizeof(line),&cur,end)){
+        l++;
+        int r = sblc_compile_line(line,il,ct,ll);
+        if (r < 0){
+            *ln = l;
+            return r;
+        }
+    }
+    ilist_add(il,MAKE_OP(OP_NONE));
+    return 0;
+}
 
 int main(int argc, char* argv[]){
     if(argc < 2){
@@ -29,6 +61,14 @@ int main(int argc, char* argv[]){
         fprintf(stderr,"ERROR: can't open output file");
         return -1;
     }
+    
+    fseek(fin,0L,SEEK_END);
+    size_t fsize = ftell(fin);
+    rewind(fin);
+
+    char* fbuf = calloc(fsize,1);
+    fread(fbuf,1,fsize,fin);
+    fclose(fin);
 
     constabl_t ct;
     ilist_t    il;
@@ -37,27 +77,22 @@ int main(int argc, char* argv[]){
     ilist_init(&il);
     lablist_init(&ll);
     
-    char line[128] = {0};
-    size_t l = 0;
-    while(fgets(line,sizeof(line),fin)){
-        l++;
-        if(strlen(line) == 0) continue;
-        if(line[0] == '#') continue;
-        
-        int r = sblc_compile_line(line,&il,&ct,&ll);
-        switch(r){
-            case 0: break;
-            case -1:
-                    fprintf(stderr,"ERROR: unknown operation at line %zu",l);
-                    return -1;
-            case -2:
-                    fprintf(stderr,"ERROR: Unknown label at %zu",l);
-                    return -1;
-        }
+    int r = 0;
+
+    r = address_labels(fbuf, fsize, &ll);
+    size_t ln;
+    r = compile_file(fbuf, fsize, &il, &ct, &ll, &ln);
+
+    switch(r){
+        case 0: break;
+        case -1:
+                fprintf(stderr,"ERROR: unknown operation at line %zu",ln);
+                return -1;
+        case -2:
+                fprintf(stderr,"ERROR: Unknown label at line %zu",ln);
+                return -1;
     }
-    ilist_add(&il,MAKE_OP(OP_NONE));
-
     sblc_emit(fout,&il,&ct, &ll);
-
+    fclose(fout);
     return 0;
 }
