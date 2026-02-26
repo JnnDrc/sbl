@@ -3,6 +3,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <math.h>
+#include <ctype.h>
 
 #include "sblop.h"
 #include "sblinst.h"
@@ -57,6 +58,32 @@ int main(int argc, char* argv[]){
                 return 1;
         }
     }
+    printf("STATIC---------------------------------*\n");
+    for (size_t i = 0; i < vm.statmem.size; i += 16) {
+
+            /* Print offset */
+            printf("%04zx:  ", i);
+
+            /* Print hex bytes */
+            for (size_t j = 0; j < 16; j++) {
+                if (i + j < vm.statmem.size)
+                    printf("%02x ", vm.statmem.data[i + j]);
+                else
+                    printf("   ");  // padding for last row
+            }
+
+            printf(" | ");
+
+            /* Print ASCII representation */
+            for (size_t j = 0; j < 16; j++) {
+                if (i + j < vm.statmem.size) {
+                    unsigned char c = vm.statmem.data[i + j];
+                    printf("%c", isprint(c) ? c : '.');
+                }
+            }
+
+            printf("\n");
+        }
     printf("*--------------------------------------*\n");
     fflush(stdout);
 

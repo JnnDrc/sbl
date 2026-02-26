@@ -1,4 +1,5 @@
 #include <stdbool.h>
+#include <stdio.h>
 
 #include "sblval.h"
 #include "sbldef.h"
@@ -17,4 +18,18 @@ bool sblval_eq(sblval_t a, sblval_t b){
     if (a.type != b.type) return false;
     if (!memeq(&a.as,&b.as,sizeof(a.as))) return false;
     return true;
+}
+
+void sblval_print(sblval_t v){
+    switch(v.type){
+        case SBL_VAL_NUM:
+            printf("%.02f",v.as.num);
+            break;
+        case SBL_VAL_INT:
+              printf("%d",v.as.off);
+              break;
+        case SBL_VAL_PTR:
+              printf("%p",v.as.ptr);
+              break;
+    }
 }

@@ -15,7 +15,6 @@
 #define F_HASOUT    2 << 1
 #define F_LEXDRAIN  2 << 2
 
-
 int main(int argc, char* argv[]){
     uint8_t flags = 0;
     if(argc < 2){
@@ -74,7 +73,7 @@ int main(int argc, char* argv[]){
     if(HASF(flags,F_LEXDRAIN)){
         for(token_t cur = lex_next(&l); cur.kind != TOK_NONE; cur = lex_next(&l))
             fprintf(HASF(flags,F_HASOUT) ? fout : stdout,
-                    "%d:%d:\t  %s \"%.*s\"\n",
+                    "%d:%d:\t  %s \'%.*s\'\n",
                     cur.line,cur.column,
                     tokk_string(cur.kind),
                     (int)cur.len,cur.start);
@@ -90,10 +89,12 @@ int main(int argc, char* argv[]){
     lablist_t ll;
     constabl_init(&ct);
     lablist_init(&ll);
+    statbuf_t sb;
+    sb_init(&sb);
 
     // compile to instruction objects
     for(token_t cur = lex_next(&l);
-        !sblc_compile_token(cur,&l,&iol,&ct,&ll,&pt);
+        !sblc_compile_token(cur,&l,&iol,&ct,&ll,&pt,&sb);
         cur = lex_next(&l));
 
     // backpatch unresolved labels
@@ -103,7 +104,7 @@ int main(int argc, char* argv[]){
     ilist_t il = iolist_make(iol);
 
     // emit to file
-    sblc_emit(fout,&il,&ct, &ll);
+    sblc_emit(fout,&il,&ct, &ll,&sb);
 
     fclose(fout);
     return 0;

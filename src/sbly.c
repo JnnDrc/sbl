@@ -121,6 +121,34 @@ static token_t lex_ident(lexer_t *l){
     return t;
 }
 
+static token_t lex_string(lexer_t* l){
+    size_t start = l->pos;
+    uint32_t col = l->column;
+    
+    while(l->pos < l->len){
+        l->pos++;
+        l->column++;
+        if(l->src[l->pos] == '\n'){
+            l->line++;
+            l->column = 1;
+        }
+        if (l->src[l->pos] == '"'){
+            l->pos++;
+            l->column++;
+            break;
+        }
+    }
+
+    token_t t = {0};
+    t.kind    = TOK_STRLIT;
+    t.start   = l->src+start+1;
+    t.len     = l->pos - start - 2;
+    t.line    = l->line;
+    t.column  = col;
+
+    return t;
+}
+
 token_t lex_next(lexer_t* l){
     skip_ws_comment(l);
 
@@ -129,6 +157,8 @@ token_t lex_next(lexer_t* l){
     char c = l->src[l->pos];
 
     if ((int)isdigit(c)) return lex_number(l);
+    
+    if(c == '"') return lex_string(l);
 
     return lex_ident(l);
 }

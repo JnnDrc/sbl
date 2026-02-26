@@ -13,20 +13,23 @@
 
 
 typedef struct sbl_binh{
-    char        magic[2];  // SB
-    uint16_t    insts;
-    uint32_t    ctb_off;
-    uint32_t    start;
-    sblver_t    version;
-}sblbinh_t;
+    char        magic[2];  // SB    // 2
+    sblver_t    version;            // 2
+    uint32_t    insts;              // 4
+    uint32_t    ctb_off;            // 4
+    uint32_t    stb_off;            // 4
+    uint32_t    start;              // 4
+}sblbinh_t;                         // 20 bytes
 
-sblbinh_t sbl_make_info(ilist_t *il, constabl_t *ct, lablist_t *ll);
+sblbinh_t sbl_make_info(ilist_t *il, constabl_t *ct, lablist_t *ll,statbuf_t* sb);
+int sbl_load_info(sblbinh_t* bi, FILE* fp);
 
 typedef struct sblvm{
     sblbinh_t   bin_info;
 
     ilist_t     insts;
     constabl_t  consts;
+    statbuf_t   statmem;
 
     stack_t     data;
     stack_t     call;

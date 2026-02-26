@@ -34,6 +34,10 @@ typedef enum sbl_op{
     OP_EQ    = 29,  // op   [a b] -> [c]
     OP_NE    = 30,  // op   [a b] -> [c]
 
+    OP_AND   = 31,  // op   [a b] -> [c]
+    OP_OR    = 32,  // op   [a b] -> [c]
+    OP_NOT   = 33,  // op   [a b] -> [c]
+
     OP_POW   = 35,   // op  [a b] -> [c]
     OP_SQR   = 36,   // op  [a] -> [a]
     OP_SQRT  = 37,   // op  [a] -> [a]
@@ -45,6 +49,7 @@ typedef enum sbl_op{
     OP_PUT   = 81,  // op (prints char of value a)
     OP_DUMP  = 82,  // op [a] -> [] (prints value of a, drops it)
     OP_TRACE = 83,  // op debug print entire stack
+    OP_PUTS  = 84,
 }sbl_op_n;
 
 struct sblo_str_op{

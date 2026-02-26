@@ -190,7 +190,7 @@ int sblc_compile_op(token_t cur, lexer_t* lex, iolist_t* iol, constabl_t* ct, la
     return 0;
 }
 
-int sblc_compile_token(token_t cur, lexer_t* lex, iolist_t* iol, constabl_t* ct, lablist_t* ll, patchtable_t* pt){
+int sblc_compile_token(token_t cur, lexer_t* lex, iolist_t* iol, constabl_t* ct, lablist_t* ll, patchtable_t* pt, statbuf_t* sb){
     char    buf[128];
     switch(cur.kind){
     case TOK_NONE:
@@ -208,7 +208,18 @@ int sblc_compile_token(token_t cur, lexer_t* lex, iolist_t* iol, constabl_t* ct,
         }
     case TOK_STRLIT:
         {
-            assert(0 && "UNREACHEABLE: STRINGS ARE NOT SUPPORTED YET");
+            char* tmp = malloc(cur.len+1);
+            if(!tmp){
+                fprintf(stderr, "PANIC: Failed to allocate memory");
+                exit(-1);
+            }
+            memcpy(tmp,cur.start,cur.len);
+            tmp[cur.len] = '\0';
+            uint32_t off = sb_create(sb,tmp,cur.len+1);
+            free(tmp);
+            sblval_t voff = sblint(off);
+            int ci = const_find_or_add(ct,voff);
+            iolist_add(iol,iobj_opk(OP_PUSH,ci));
             break;
         }
     case TOK_LABEL_DEF:
@@ -253,7 +264,7 @@ int sblc_compile_token(token_t cur, lexer_t* lex, iolist_t* iol, constabl_t* ct,
         {
             uint32_t __then, __else, __end;
             for(token_t tok = lex_next(lex); tok.kind != TOK_THEN; tok = lex_next(lex))
-                sblc_compile_token(tok,lex,iol,ct,ll,pt);
+                sblc_compile_token(tok,lex,iol,ct,ll,pt,sb);
             // hop jump __IF_ELSE
             iolist_add(iol,iobj_op(OP_HOP));
 
@@ -263,7 +274,7 @@ int sblc_compile_token(token_t cur, lexer_t* lex, iolist_t* iol, constabl_t* ct,
             token_t tok;
             for(tok = lex_next(lex);
                 tok.kind != TOK_ELSE && tok.kind != TOK_END;
-                tok = lex_next(lex)) sblc_compile_token(tok,lex,iol,ct,ll,pt);
+                tok = lex_next(lex)) sblc_compile_token(tok,lex,iol,ct,ll,pt,sb);
             
             if(tok.kind == TOK_ELSE){
                 uint32_t __jump_to_end_addr = iol->size;
@@ -271,7 +282,7 @@ int sblc_compile_token(token_t cur, lexer_t* lex, iolist_t* iol, constabl_t* ct,
 
                 __else = iol->size;
                 for(token_t ntok = lex_next(lex); ntok.kind != TOK_END; ntok = lex_next(lex))
-                    sblc_compile_token(ntok,lex,iol,ct,ll,pt);
+                    sblc_compile_token(ntok,lex,iol,ct,ll,pt,sb);
 
                 __end = iol->size;
 
@@ -290,20 +301,25 @@ int sblc_compile_token(token_t cur, lexer_t* lex, iolist_t* iol, constabl_t* ct,
 
             int elci = const_find_or_add(ct,sblint(__else - __then));
             iol->data[__then].arg.k = elci;
+            break;
         }
     case TOK_THEN:
         {
-            printf("THEN NOT IMPLEMENTED\n"); break;
+            fprintf(stderr,"%d:%d: unexpected 'then' without if",cur.line,cur.column);
+            exit(1);
+            break;
         }
     case TOK_ELSE:
         {
-            printf("ELSE NOT IMPLEMENTED\n"); break;
+            fprintf(stderr,"%d:%d: unexpected 'else' without if-then",cur.line,cur.column);
+            exit(1);
+            break;
         }
     case TOK_WHILE:
         {
             uint32_t __while = iol->size;
             for(token_t tok = lex_next(lex); tok.kind != TOK_DO; tok = lex_next(lex))
-                sblc_compile_token(tok,lex,iol,ct,ll,pt);
+                sblc_compile_token(tok,lex,iol,ct,ll,pt,sb);
             // hop jump __WHILE_END
             iolist_add(iol,iobj_op(OP_HOP));
 
@@ -311,7 +327,7 @@ int sblc_compile_token(token_t cur, lexer_t* lex, iolist_t* iol, constabl_t* ct,
             iolist_add(iol,iobj_opk(OP_JUMP, INT32_MAX));
             
             for(token_t tok = lex_next(lex); tok.kind != TOK_END; tok = lex_next(lex))
-                sblc_compile_token(tok,lex,iol,ct,ll,pt);
+                sblc_compile_token(tok,lex,iol,ct,ll,pt,sb);
             // add jump __WHILE
             int wci = const_find_or_add(ct,sblint(__while - iol->size));
             iolist_add(iol,iobj_opk(OP_JUMP,wci));
@@ -339,15 +355,17 @@ int sblc_compile_token(token_t cur, lexer_t* lex, iolist_t* iol, constabl_t* ct,
     return 0;
 }
 
-void sblc_emit(FILE* fp, ilist_t* il, constabl_t* ct, lablist_t* ll){
+void sblc_emit(FILE* fp, ilist_t* il, constabl_t* ct, lablist_t* ll, statbuf_t* sb){
     // header
-    sblbinh_t bi = sbl_make_info(il,ct,ll);
+    sblbinh_t bi = sbl_make_info(il,ct,ll,sb);
     fwrite(&bi,sizeof(bi),1,fp);
 
     // instructions
     fwrite(il->data,sizeof(*il->data),il->size,fp);
     // const table
     fwrite(ct->data,sizeof(*ct->data),ct->size,fp);
+    // static buffer
+    fwrite(sb->data,1,sb->size,fp);
 }
 
 label_t label(char* id, uint32_t line){
@@ -407,4 +425,30 @@ int patch_add(patchtable_t* pt, patch_t p){
     }
     pt->data[pt->size++] = p;
     return 0;
+}
+
+int sb_init(statbuf_t* sb){
+    sb->size = 0;
+    sb->capacity = STATBUF_INIT_CAP;
+
+    sb->data = calloc(sb->capacity,sizeof(inst_t));
+    if(!sb->data) return -1;
+
+    return 0;
+}
+
+uint32_t sb_create(statbuf_t* sb, void* data, size_t size){
+    if (sb->size >= sb->capacity){
+        uint32_t ncap = sb->capacity * 2;
+        char* ndata = calloc(ncap, sizeof(char));
+        if(!ndata) return -1;
+        memcpy(ndata,sb->data,sb->size);
+        free(sb->data);
+        sb->data = ndata;
+        sb->capacity = ncap;
+    }
+    uint32_t off = sb->size;
+    if(data) memcpy(sb->data+sb->size,data,size);
+    sb->size += size;
+    return off;
 }

@@ -46,6 +46,12 @@ static struct sblo_str_op sblo_opstr_table[] = {
     {.str = "=",    .op = OP_EQ},
     {.str = "ne",   .op = OP_NE},
     {.str = "~",    .op = OP_NE},
+    {.str = "and",  .op = OP_AND},
+    {.str = "&",    .op = OP_AND},
+    {.str = "or",   .op = OP_OR},
+    {.str = "|",    .op = OP_OR},
+    {.str = "not",  .op = OP_NOT},
+    {.str = "!",    .op = OP_NOT},
     {.str = "pow",  .op = OP_POW},
     {.str = "**",   .op = OP_POW},
     {.str = "sqr",  .op = OP_SQR},
@@ -59,6 +65,7 @@ static struct sblo_str_op sblo_opstr_table[] = {
     {.str = "@",    .op = OP_PUT},
     {.str = "dump", .op = OP_DUMP},
     {.str = "trace",.op = OP_TRACE},
+    {.str = "puts", .op = OP_PUTS},
     {.str = NULL,   .op = 0}
 };
 char* sblo_op_string(sbl_op_n op){
@@ -88,6 +95,9 @@ char* sblo_op_string(sbl_op_n op){
         case OP_LE:     return "le";
         case OP_EQ:     return "eq";
         case OP_NE:     return "ne";
+        case OP_AND:    return "and";
+        case OP_OR:     return "or";
+        case OP_NOT:    return "not";
         case OP_POW:    return "pow";
         case OP_SQR:    return "sqr";
         case OP_SQRT:   return "sqrt";
@@ -97,6 +107,7 @@ char* sblo_op_string(sbl_op_n op){
         case OP_PUT:    return "put";
         case OP_DUMP:   return "dump";
         case OP_TRACE:  return "trace";
+        case OP_PUTS:   return "puts";
         default:        return "unknown";
     }
 }

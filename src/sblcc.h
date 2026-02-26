@@ -50,11 +50,24 @@ int patch_add(patchtable_t* pt, patch_t p);
 
 // -------------------------------------
 
+#define STATBUF_INIT_CAP 1024
+typedef struct static_buffer{
+    uint32_t size;
+    uint32_t capacity;
+    char* data;
+}statbuf_t;
+
+
+int sb_init(statbuf_t* sb);
+uint32_t sb_create(statbuf_t* sb, void* data, size_t size);
+
+// -------------------------------------
+
 int sblc_compile_line(char* line, ilist_t* il, constabl_t* ct, lablist_t* ll);
-void sblc_emit(FILE* fp, ilist_t* il, constabl_t* ct, lablist_t* ll);
+void sblc_emit(FILE* fp, ilist_t* il, constabl_t* ct, lablist_t* ll, statbuf_t* sb);
 
 int sblc_patch(patch_t p, iolist_t* iol,constabl_t* ct, lablist_t* ll);
 int sblc_compile_op(token_t cur, lexer_t* lex, iolist_t* iol, constabl_t* ct, lablist_t* ll, patchtable_t* pt);
-int sblc_compile_token(token_t cur, lexer_t* lex, iolist_t* iol, constabl_t* ct, lablist_t* ll, patchtable_t* pt);
+int sblc_compile_token(token_t cur, lexer_t* lex, iolist_t* iol, constabl_t* ct, lablist_t* ll, patchtable_t* pt, statbuf_t* sb);
 
 #endif /* _SBLCC_H */ 

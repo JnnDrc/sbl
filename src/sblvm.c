@@ -7,34 +7,46 @@
 #include "sblop.h"
 #include "sblvm.h"
 
-sblbinh_t sbl_make_info(ilist_t *il, constabl_t *ct, lablist_t *ll){
-    (void) ct;
+sblbinh_t sbl_make_info(ilist_t *il, constabl_t *ct, lablist_t *ll,statbuf_t* sb){
+    (void) sb;
     sblbinh_t bi;
     // magic number
     bi.magic[0] = 'S';
     bi.magic[1] = 'B';
-
+    // version
+    bi.version = SBL_MAKE_VERSION(SBL_MAJOR,SBL_MINOR);
     // instruction count
     bi.insts = il->size;
     // const table offset
     bi.ctb_off = il->size * sizeof(*il->data);
+    bi.stb_off = (il->size * sizeof(*il->data)) + (ct->size * sizeof(*ct->data));
     int32_t start = label_find(ll,"main");          // start address
     if (start < 0) start = 0;
     bi.start = start;
-    bi.version = SBL_MAKE_VERSION(SBL_MAJOR,SBL_MINOR);
     return bi;
+}
+
+int sbl_load_info(sblbinh_t* bi, FILE* fp){
+    fread(bi,sizeof(sblbinh_t),1,fp);
+    if (strncmp(bi->magic,"SB",2)) return SBL_ERR_NOT_SLB;
+    return 0;
 }
 
 int sblvm_load(sblvm_t* vm, FILE* fp){
     stack_init(&vm->data);
     ilist_init(&vm->insts);
     constabl_init(&vm->consts);
+    sb_init(&vm->statmem);
 
-    fread(&vm->bin_info,sizeof(sblbinh_t),1,fp);
-    if (strncmp(vm->bin_info.magic,"SB",2)) return SBL_ERR_NOT_SLB;
+    int err = sbl_load_info(&vm->bin_info,fp);
+    if(err) return err;
 
     vm->insts.size = vm->bin_info.insts;
     fread(vm->insts.data,sizeof(inst_t),vm->bin_info.insts,fp);
+    
+    long ctb_bytes  = vm->bin_info.stb_off - vm->bin_info.ctb_off;
+    vm->consts.size = ctb_bytes / sizeof(sblval_t);
+    fread(vm->consts.data,1,ctb_bytes,fp);
 
     long cur = ftell(fp);
     fseek(fp,0L,SEEK_END);
@@ -43,8 +55,8 @@ int sblvm_load(sblvm_t* vm, FILE* fp){
     long remain = end - cur;
     fseek(fp,cur,SEEK_SET);
 
-    vm->consts.size = remain / sizeof(sblval_t);
-    fread(vm->consts.data,1,remain,fp);
+    vm->statmem.size = remain;
+    fread(vm->statmem.data,1,remain,fp);
 
     vm->ip   = vm->bin_info.start;
     vm->halt = false;
@@ -205,6 +217,23 @@ int sblvm_exec(sblvm_t* vm){
             stk_push(&vm->data,sblnum(!sblval_eq(a,b)));
             break;
         }
+        case OP_AND:{
+            sblval_t a = stk_pop(&vm->data);
+            sblval_t b = stk_pop(&vm->data);
+            stk_push(&vm->data,sblnum(a.as.num && b.as.num));
+            break;
+        }
+        case OP_OR:{
+            sblval_t a = stk_pop(&vm->data);
+            sblval_t b = stk_pop(&vm->data);
+            stk_push(&vm->data,sblnum(a.as.num || b.as.num));
+            break;
+        }
+        case OP_NOT:{
+            sblval_t a = stk_pop(&vm->data);
+            stk_push(&vm->data,sblnum(!a.as.num));
+            break;
+        }
         case OP_POW:{
             sblval_t a = stk_pop(&vm->data);
             sblval_t b = stk_pop(&vm->data);
@@ -248,6 +277,11 @@ int sblvm_exec(sblvm_t* vm){
         }
         case OP_TRACE:{
             stk_trace(&vm->data);
+            break;
+        }
+        case OP_PUTS:{
+            uint32_t off = vm->data.data[vm->data.sp - 1].as.off;
+            printf("%s",vm->statmem.data + off);
             break;
         }
         default:

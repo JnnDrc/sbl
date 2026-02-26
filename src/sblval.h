@@ -54,6 +54,7 @@ sblval_t sblint(sblint_t i);
 sblval_t sblptr(sblptr_t p);
 
 bool sblval_eq(sblval_t a, sblval_t b);
+void sblval_print(sblval_t v);
 
 #define sblval_is(v,t) (v.type == t)
 
