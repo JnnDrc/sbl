@@ -16,7 +16,7 @@ TARGETS_MAIN  := $(addsuffix .c, $(TARGETS))
 SRC := $(filter-out $(addprefix $(SRC_DIR)/, $(TARGETS_MAIN)),$(wildcard $(SRC_DIR)/*.c))
 OBJ := $(patsubst %.c, %.o, $(SRC))
 
-.PHONY: clean all
+.PHONY: clean clean-obj all
 
 all: $(TARGET_SBL) $(TARGET_SBLC) $(TARGET_SBLI) $(TARGET_SBLR)
 
@@ -41,3 +41,5 @@ $(TARGET_SBLR): %: $(SRC_DIR)/%.o $(OBJ)
 
 clean:
 	rm -f $(OBJ) $(addprefix $(SRC_DIR)/, $(addsuffix .o, $(TARGETS))) $(TARGETS) 
+clean-obj:
+	rm -f $(OBJ) $(addprefix $(SRC_DIR)/, $(addsuffix .o, $(TARGETS)))

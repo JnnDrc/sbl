@@ -71,6 +71,67 @@ labels are declared using ':' before the name of the label
 the restricted label ':main' is interpreted as the entry point of the program,
 if no :main label is found, the entry point is the first instruction of the file
 
+### While-do and If-then-else
+
+on top of labels, sbl also supports some common syntax sugars like while-do loops
+and if-then-else blocks
+
+#### While loop
+while loops are made like this:
+
+```sbl
+    10 while dup 0 gt do top dec end
+```
+this is the equivalent with labels:
+```
+10 
+:WHILE 
+dup 0 gt
+hop jump END
+:DO
+top dec
+jump WHILE
+:END
+```
+
+#### If-then-else block
+
+if-then-else blocks are made like this:
+
+```sbl
+    10 if dup 5 eq then dup top else 13 top end
+```
+
+this is the equivalent with labels:
+```sbl
+10
+:IF
+dup 5 eq
+hop jump ELSE
+:THEN
+dup top
+jump END
+:ELSE
+13 top
+:END
+```
+
+there is also the if-then block, without else
+
+```sbl
+    10 if dup 5 eq then dup top end
+```
+
+```sbl
+10
+:IF
+dup 5 eq
+hop jump END
+:THEN
+dup top
+:END
+```
+
 ### Operations:
 - none  : end of program
 - add   : b a -- (a + b)
@@ -110,3 +171,6 @@ if no :main label is found, the entry point is the first instruction of the file
 - ret   : {pop ip (call stack)}
 
 - top   : {print top element}
+- put   : {print top element as char}
+- dump  : {pop and print top element}
+- trace : {print entire stack}

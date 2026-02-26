@@ -6,4 +6,6 @@
 /*.txt
 /*.slb
 /*.bl
-/NOTES.txt
+
+NOTES.txt
+build/

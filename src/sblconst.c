@@ -35,3 +35,9 @@ int const_add(constabl_t* ct, sblval_t v){
     ct->data[ct->size++] = v;
     return i;
 }
+
+int const_find_or_add(constabl_t* ct, sblval_t v){
+    int ci = const_find(ct,v);
+    if(ci < 0) ci = const_add(ct,v);
+    return ci;
+}

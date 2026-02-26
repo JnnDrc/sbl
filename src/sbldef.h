@@ -16,4 +16,7 @@ typedef unsigned int uint;
 #define min(a,b) ((a) < (b) ? (a) : (b))
 #define sign(x)  ((x) == 0 ? 0 : (x) < 0 ? -1 : 1)
 
+#define SETF(fs, f) ((fs) |= (f))
+#define HASF(fs, f) ((fs) & (f))
+
 #endif /* _SBLDEF_H */

@@ -5,14 +5,26 @@
 #include "sblval.h"
 
 typedef enum token_kind{
-    TOK_NONE,       // nothing, eof
-    TOK_NUMLIT,     // number literal
-    TOK_STRLIT,     // string literal (reserved for future)
+    TOK_NONE   = 0,      // nothing, eof
+    TOK_NUMLIT = 2,      // number literal
+    TOK_STRLIT = 3,      // string literal (reserved for future)
 
-    TOK_LABEL_DEF,  // :foo
-    TOK_IDENT,      // foo
-    TOK_OP,         // builting operator ("keyword") (implement later)
+    TOK_LABEL_DEF = 10,  // :foo
+    TOK_IDENT     = 11,  // foo
+    TOK_OP        = 12,  // builting operator ("keyword")
+    
+    // if abstraction
+    TOK_IF = 21,
+    TOK_THEN = 22,
+    TOK_ELSE = 23,
+    // while abstraction
+    TOK_WHILE = 24,
+    TOK_DO  = 25,
+    // end
+    TOK_END = 26,
 }tokind_n;
+
+char* tokk_string(tokind_n tk);
 
 typedef struct token{
     tokind_n kind;

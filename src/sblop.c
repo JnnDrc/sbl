@@ -1,7 +1,66 @@
 #include "sblop.h"
-
 #include "sbldef.h"
 
+static struct sblo_str_op sblo_opstr_table[] = {
+    {.str = "none", .op = OP_NONE},
+    {.str = "add",  .op = OP_ADD},
+    {.str = "+",    .op = OP_ADD},
+    {.str = "sub",  .op = OP_SUB},
+    {.str = "-",    .op = OP_SUB},
+    {.str = "mul",  .op = OP_MUL},
+    {.str = "*",    .op = OP_MUL},
+    {.str = "div",  .op = OP_DIV},
+    {.str = "/",    .op = OP_DIV},
+    {.str = "mod",  .op = OP_MOD},
+    {.str = "%",    .op = OP_MOD},
+    {.str = "inc",  .op = OP_INC},
+    {.str = "++",   .op = OP_INC},
+    {.str = "dec",  .op = OP_DEC},
+    {.str = "--",   .op = OP_DEC},
+    {.str = "sum",  .op = OP_SUM},
+    {.str = "prod", .op = OP_PROD},
+    {.str = "push", .op = OP_PUSH},
+    {.str = "pop",  .op = OP_POP},
+    {.str = "drop", .op = OP_POP},
+    {.str = "swap", .op = OP_SWAP},
+    {.str = "<>",   .op = OP_SWAP},
+    {.str = "dup",  .op = OP_DUP},
+    {.str = "over", .op = OP_OVER},
+    {.str = "rot",  .op = OP_LROT},
+    {.str = "+rot", .op = OP_LROT},
+    {.str = "<|",   .op = OP_LROT},
+    {.str = "-rot", .op = OP_RROT},
+    {.str = "|>",   .op = OP_RROT},
+    {.str = "jump", .op = OP_JUMP},
+    {.str = "jmp",  .op = OP_JUMP},
+    {.str = "hop",  .op = OP_HOP},
+    {.str = "gt",   .op = OP_GT},
+    {.str = ">",    .op = OP_GT},
+    {.str = "lt",   .op = OP_LT},
+    {.str = "<",    .op = OP_LT},
+    {.str = "ge",   .op = OP_GE},
+    {.str = ">=",   .op = OP_GE},
+    {.str = "le",   .op = OP_LE},
+    {.str = "<=",   .op = OP_LE},
+    {.str = "eq",   .op = OP_EQ},
+    {.str = "=",    .op = OP_EQ},
+    {.str = "ne",   .op = OP_NE},
+    {.str = "~",    .op = OP_NE},
+    {.str = "pow",  .op = OP_POW},
+    {.str = "**",   .op = OP_POW},
+    {.str = "sqr",  .op = OP_SQR},
+    {.str = "sqrt", .op = OP_SQRT},
+    {.str = "call", .op = OP_CALL},
+    {.str = "ret",  .op = OP_RET},
+    {.str = ";",    .op = OP_RET},
+    {.str = "top",  .op = OP_TOP},
+    {.str = ".",    .op = OP_TOP},
+    {.str = "put",  .op = OP_PUT},
+    {.str = "@",    .op = OP_PUT},
+    {.str = "dump", .op = OP_DUMP},
+    {.str = "trace",.op = OP_TRACE},
+    {.str = NULL,   .op = 0}
+};
 char* sblo_op_string(sbl_op_n op){
     switch (op) {
         case OP_NONE:   return "none";
@@ -35,80 +94,20 @@ char* sblo_op_string(sbl_op_n op){
         case OP_CALL:   return "call";
         case OP_RET:    return "ret";
         case OP_TOP:    return "top";
+        case OP_PUT:    return "put";
+        case OP_DUMP:   return "dump";
+        case OP_TRACE:  return "trace";
         default:        return "unknown";
     }
 }
 
 int32_t sblo_isop(const char* op){
-    if      (streq(op,"none"))  return OP_NONE;
-    else if (streq(op,"add"))   return OP_ADD;
-    else if (streq(op,"sub"))   return OP_SUB;
-    else if (streq(op,"mul"))   return OP_MUL;
-    else if (streq(op,"div"))   return OP_DIV;
-    else if (streq(op,"mod"))   return OP_MOD;
-    else if (streq(op,"inc"))   return OP_INC;
-    else if (streq(op,"dec"))   return OP_DEC;
-    else if (streq(op,"sum"))   return OP_SUM;
-    else if (streq(op,"prod"))  return OP_PROD;
-    else if (streq(op,"push"))  return OP_PUSH;
-    else if (streq(op,"pop"))   return OP_POP;
-    else if (streq(op,"swap"))  return OP_SWAP;
-    else if (streq(op,"dup"))   return OP_DUP;
-    else if (streq(op,"over"))  return OP_OVER;
-    else if (streq(op,"rot"))   return OP_LROT;
-    else if (streq(op,"+rot"))  return OP_LROT;
-    else if (streq(op,"-rot"))  return OP_RROT;
-    else if (streq(op,"jump"))  return OP_JUMP;
-    else if (streq(op,"jmp"))   return OP_JUMP;
-    else if (streq(op,"hop"))   return OP_HOP;
-    else if (streq(op,"gt"))    return OP_GT;
-    else if (streq(op,"lt"))    return OP_LT;
-    else if (streq(op,"ge"))    return OP_GE;
-    else if (streq(op,"le"))    return OP_LE;
-    else if (streq(op,"eq"))    return OP_EQ;
-    else if (streq(op,"ne"))    return OP_NE;
-    else if (streq(op,"pow"))   return OP_POW;
-    else if (streq(op,"sqr"))   return OP_SQR;
-    else if (streq(op,"sqrt"))  return OP_SQRT;
-    else if (streq(op,"call"))  return OP_CALL;
-    else if (streq(op,"ret"))   return OP_RET;
-    else if (streq(op,"top"))   return OP_TOP;
-    else return -1;
+    return sblo_isopn(op,strlen(op));
 }
 
 int32_t sblo_isopn(const char* op, size_t len){
-    if      (streqn(op,"none",len))  return OP_NONE;
-    else if (streqn(op,"add",len))   return OP_ADD;
-    else if (streqn(op,"sub",len))   return OP_SUB;
-    else if (streqn(op,"mul",len))   return OP_MUL;
-    else if (streqn(op,"div",len))   return OP_DIV;
-    else if (streqn(op,"mod",len))   return OP_MOD;
-    else if (streqn(op,"inc",len))   return OP_INC;
-    else if (streqn(op,"dec",len))   return OP_DEC;
-    else if (streqn(op,"sum",len))   return OP_SUM;
-    else if (streqn(op,"prod",len))  return OP_PROD;
-    else if (streqn(op,"push",len))  return OP_PUSH;
-    else if (streqn(op,"pop",len))   return OP_POP;
-    else if (streqn(op,"swap",len))  return OP_SWAP;
-    else if (streqn(op,"dup",len))   return OP_DUP;
-    else if (streqn(op,"over",len))  return OP_OVER;
-    else if (streqn(op,"rot",len))   return OP_LROT;
-    else if (streqn(op,"+rot",len))  return OP_LROT;
-    else if (streqn(op,"-rot",len))  return OP_RROT;
-    else if (streqn(op,"jump",len))  return OP_JUMP;
-    else if (streqn(op,"jmp",len))   return OP_JUMP;
-    else if (streqn(op,"hop",len))   return OP_HOP;
-    else if (streqn(op,"gt",len))    return OP_GT;
-    else if (streqn(op,"lt",len))    return OP_LT;
-    else if (streqn(op,"ge",len))    return OP_GE;
-    else if (streqn(op,"le",len))    return OP_LE;
-    else if (streqn(op,"eq",len))    return OP_EQ;
-    else if (streqn(op,"ne",len))    return OP_NE;
-    else if (streqn(op,"pow",len))   return OP_POW;
-    else if (streqn(op,"sqr",len))   return OP_SQR;
-    else if (streqn(op,"sqrt",len))  return OP_SQRT;
-    else if (streqn(op,"call",len))  return OP_CALL;
-    else if (streqn(op,"ret",len))   return OP_RET;
-    else if (streqn(op,"top",len))   return OP_TOP;
-    else return OP_NONE;
+    for(int i = 0; sblo_opstr_table[i].str; i++)
+        if(streqn(op,sblo_opstr_table[i].str,len))
+            return sblo_opstr_table[i].op;
+    return 0;
 }

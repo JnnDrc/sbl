@@ -7,19 +7,32 @@
 
 #include "sblval.h"
 #include "sblop.h"
+#include "sbldef.h"
 
-// static char* tokk_string(tokind_n tk){
-//     switch(tk){
-//         case TOK_NONE:          return "NONE";
-//         case TOK_NUMLIT:        return "NUMLIT";
-//         case TOK_STRLIT:        return "STRLIT";
-//         case TOK_LABEL_DEF:     return "LABEL_DEF";
-//         case TOK_IDENT:         return "IDENT";
-//         case TOK_OP:            return "OP";
-//       break;
-//     }
-//     return "UNKNOWN";
-// }
+char* tokk_string(tokind_n tk){
+    switch(tk){
+        case TOK_NONE:          return "NONE";
+        case TOK_NUMLIT:        return "NUMLIT";
+        case TOK_STRLIT:        return "STRLIT";
+        case TOK_LABEL_DEF:     return "LABEL_DEF";
+        case TOK_IDENT:         return "IDENT";
+        case TOK_OP:            return "OP";
+        case TOK_IF:            return "IF";
+        case TOK_THEN:          return "THEN";
+        case TOK_ELSE:          return "ELSE";
+        case TOK_WHILE:         return "WHILE";
+        case TOK_DO:            return "DO";
+        case TOK_END:           return "END";
+        default:                return "UNKNOWN";
+    }
+}
+char* keywords[] = {"if","then","else","while","do","end"};
+tokind_n iskwd(const char* str, int len){
+    for(size_t i = 0; i < sizeof(keywords)/sizeof(*keywords); i++){
+        if(streqn(str,keywords[i],len)) return 21 + i;
+    }
+    return 0;
+}
 
 lexer_t lexer(char* src, size_t len){
     return (lexer_t){.src = src, .len = len,.pos = 0, .line = 1, .column = 1};
@@ -99,7 +112,11 @@ static token_t lex_ident(lexer_t *l){
             t.kind = TOK_OP;
             t.op = o;
         }
-        else t.kind = TOK_IDENT;
+        else{
+            tokind_n kw = iskwd(t.start,t.len);
+            if(kw) t.kind = kw;
+            else t.kind = TOK_IDENT;
+        }
     }
     return t;
 }

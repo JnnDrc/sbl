@@ -190,7 +190,7 @@ int sblc_compile_op(token_t cur, lexer_t* lex, iolist_t* iol, constabl_t* ct, la
     return 0;
 }
 
-int slbc_compile_token(token_t cur, lexer_t* lex, iolist_t* iol, constabl_t* ct, lablist_t* ll, patchtable_t* pt){
+int sblc_compile_token(token_t cur, lexer_t* lex, iolist_t* iol, constabl_t* ct, lablist_t* ll, patchtable_t* pt){
     char    buf[128];
     switch(cur.kind){
     case TOK_NONE:
@@ -247,6 +247,92 @@ int slbc_compile_token(token_t cur, lexer_t* lex, iolist_t* iol, constabl_t* ct,
             strncpy(buf,cur.start,cur.len);
             buf[cur.len] = '\0';
             sblc_compile_op(cur,lex,iol,ct,ll,pt);
+            break;
+        }
+    case TOK_IF:
+        {
+            uint32_t __then, __else, __end;
+            for(token_t tok = lex_next(lex); tok.kind != TOK_THEN; tok = lex_next(lex))
+                sblc_compile_token(tok,lex,iol,ct,ll,pt);
+            // hop jump __IF_ELSE
+            iolist_add(iol,iobj_op(OP_HOP));
+
+            __then = iol->size; // save address for backpatch
+            iolist_add(iol,iobj_opk(OP_JUMP,INT32_MAX));
+
+            token_t tok;
+            for(tok = lex_next(lex);
+                tok.kind != TOK_ELSE && tok.kind != TOK_END;
+                tok = lex_next(lex)) sblc_compile_token(tok,lex,iol,ct,ll,pt);
+            
+            if(tok.kind == TOK_ELSE){
+                uint32_t __jump_to_end_addr = iol->size;
+                iolist_add(iol,iobj_opk(OP_JUMP,INT32_MAX));
+
+                __else = iol->size;
+                for(token_t ntok = lex_next(lex); ntok.kind != TOK_END; ntok = lex_next(lex))
+                    sblc_compile_token(ntok,lex,iol,ct,ll,pt);
+
+                __end = iol->size;
+
+                int eci = const_find_or_add(ct,sblint(__end - __jump_to_end_addr));
+                iol->data[__jump_to_end_addr].arg.k = eci;
+            }else if(tok.kind == TOK_END){
+                // in case of no else, the else is the end, respecting the structure
+                // :if cond hop jump else :then body jump end :else body :end
+                // in this case, the structure is
+                // :if cond hop jump else :then body :else
+                __else = iol->size;
+            }else{
+                fprintf(stderr,"%d:%d: unknown error",tok.line,tok.column);
+                exit(1);
+            }
+
+            int elci = const_find_or_add(ct,sblint(__else - __then));
+            iol->data[__then].arg.k = elci;
+        }
+    case TOK_THEN:
+        {
+            printf("THEN NOT IMPLEMENTED\n"); break;
+        }
+    case TOK_ELSE:
+        {
+            printf("ELSE NOT IMPLEMENTED\n"); break;
+        }
+    case TOK_WHILE:
+        {
+            uint32_t __while = iol->size;
+            for(token_t tok = lex_next(lex); tok.kind != TOK_DO; tok = lex_next(lex))
+                sblc_compile_token(tok,lex,iol,ct,ll,pt);
+            // hop jump __WHILE_END
+            iolist_add(iol,iobj_op(OP_HOP));
+
+            uint32_t __do = iol->size;      // save address for backpatch
+            iolist_add(iol,iobj_opk(OP_JUMP, INT32_MAX));
+            
+            for(token_t tok = lex_next(lex); tok.kind != TOK_END; tok = lex_next(lex))
+                sblc_compile_token(tok,lex,iol,ct,ll,pt);
+            // add jump __WHILE
+            int wci = const_find_or_add(ct,sblint(__while - iol->size));
+            iolist_add(iol,iobj_opk(OP_JUMP,wci));
+
+            // patch jump _WHILE_END
+            uint32_t __end = iol->size;
+            int eci = const_find_or_add(ct,sblint(__end - __do));
+            iol->data[__do].arg.k = eci;
+
+            break;
+        }
+    case TOK_DO:
+        {
+            fprintf(stderr,"%d:%d: unexpected 'do' without while",cur.line,cur.column);
+            exit(1);
+            break;
+        }
+    case TOK_END:
+        {
+            fprintf(stderr,"%d:%d: unexpected 'end' without while-do/if-then-else block",cur.line,cur.column);
+            exit(1);
             break;
         }
     }

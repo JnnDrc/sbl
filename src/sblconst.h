@@ -17,4 +17,6 @@ int constabl_init(constabl_t* ct);
 int const_find(constabl_t* ct, sblval_t v);
 int const_add(constabl_t* ct,  sblval_t v);
 
+int const_find_or_add(constabl_t* ct, sblval_t v);
+
 #endif /* _SBLCOST_H */

@@ -55,6 +55,6 @@ void sblc_emit(FILE* fp, ilist_t* il, constabl_t* ct, lablist_t* ll);
 
 int sblc_patch(patch_t p, iolist_t* iol,constabl_t* ct, lablist_t* ll);
 int sblc_compile_op(token_t cur, lexer_t* lex, iolist_t* iol, constabl_t* ct, lablist_t* ll, patchtable_t* pt);
-int slbc_compile_token(token_t cur, lexer_t* lex, iolist_t* iol, constabl_t* ct, lablist_t* ll, patchtable_t* pt);
+int sblc_compile_token(token_t cur, lexer_t* lex, iolist_t* iol, constabl_t* ct, lablist_t* ll, patchtable_t* pt);
 
 #endif /* _SBLCC_H */ 

@@ -8,8 +8,6 @@
 #include "sblinst.h"
 #include "sblvm.h"
 
-#define SETF(fs, f) ((fs) |= (f))
-#define HASF(fs, f) ((fs) & (f))
 #define F_DEBUG   1<<0
 #define F_EXCTVER 1<<1
 

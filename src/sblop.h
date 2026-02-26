@@ -41,8 +41,16 @@ typedef enum sbl_op{
     OP_CALL  = 40,   // op k c[] -> c[ip]
     OP_RET   = 41,   // op   c[ip] -> [ip]
 
-    OP_TOP   = 80,  // op
+    OP_TOP   = 80,  // op (prints number a)
+    OP_PUT   = 81,  // op (prints char of value a)
+    OP_DUMP  = 82,  // op [a] -> [] (prints value of a, drops it)
+    OP_TRACE = 83,  // op debug print entire stack
 }sbl_op_n;
+
+struct sblo_str_op{
+    char*   str;
+    sbl_op_n op;
+};
 
 char* sblo_op_string(sbl_op_n op);
 int32_t sblo_isop(const char* op);

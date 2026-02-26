@@ -234,7 +234,20 @@ int sblvm_exec(sblvm_t* vm){
             break;
         }
         case OP_TOP:{
-            printf("%.02f\n",vm->data.data[vm->data.sp - 1].as.num);
+            printf("%.02f",vm->data.data[vm->data.sp - 1].as.num);
+            break;
+        }
+        case OP_PUT:{
+            printf("%c",(char)vm->data.data[vm->data.sp - 1].as.num);
+            break;
+        }
+        case OP_DUMP:{
+            sblval_t x = stk_pop(&vm->data);
+            printf("%.02f",x.as.num);
+            break;
+        }
+        case OP_TRACE:{
+            stk_trace(&vm->data);
             break;
         }
         default:
