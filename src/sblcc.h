@@ -7,9 +7,6 @@
 #include "sblinst.h"
 #include "sblconst.h"
 
-#define COMMENT '#'
-#define LABEL   ':'
-
 typedef struct label{
     char*    label;
     uint32_t line;

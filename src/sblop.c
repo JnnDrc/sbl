@@ -29,9 +29,7 @@ static struct sblo_str_op sblo_opstr_table[] = {
     {.str = "idec",  .op = OP_IDEC},{.str = "--",   .op = OP_IDEC},
     {.str = "dec",   .op = OP_IDEC},
     {.str = "ipow",  .op = OP_IPOW},{.str = "**",   .op = OP_IPOW},
-    {.str = "pow",   .op = OP_IPOW},
     {.str = "isqr",  .op = OP_ISQR},
-    {.str = "sqr",   .op = OP_ISQR},
 
     {.str = "uadd",  .op = OP_UADD},
     {.str = "usub",  .op = OP_USUB},

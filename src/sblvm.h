@@ -11,7 +11,6 @@
 #include "sblstack.h"
 #include "sblcc.h"
 
-
 typedef struct sbl_binh{
     char        magic[2];  // SB    // 2
     sblver_t    version;            // 2
@@ -43,5 +42,8 @@ int sblvm_load(sblvm_t* vm, FILE* fp);
 
 #define EXEC_ERR_UNKNOWN_OPC 1
 int sblvm_exec(sblvm_t* vm);
+
+typedef void (*oprt_f)(sblvm_t*, inst_t);
+#define fnop(op) void op(sblvm_t* vm, inst_t i)
 
 #endif /* _SBLVM_H */

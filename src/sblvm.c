@@ -1,12 +1,9 @@
 #include <string.h>
-#include <math.h>
 
-
-#include "sbldef.h"
-#include "sblinst.h"
-#include "sblop.h"
 #include "sblvm.h"
-#include "utils.h"
+#include "sblop.h"
+#include "sblvm_op.h"
+#include "sblinst.h"
 
 sblbinh_t sbl_make_info(ilist_t *il, constabl_t *ct, lablist_t *ll,statbuf_t* sb){
     (void) sb;
@@ -65,213 +62,58 @@ int sblvm_load(sblvm_t* vm, FILE* fp){
     return 0;
 }
 
+oprt_f operations[1024] = {
+    [OP_NONE]  = op_none,
+    [OP_NOP]   = op_nop,
+    [OP_HALT]  = op_halt,
+    [OP_JUMP]  = op_jump,
+    [OP_HOP]   = op_hop,
+    [OP_CALL]  = op_call,
+    [OP_RET]   = op_ret,
+
+    [OP_IADD]  = op_iadd,
+    [OP_ISUB]  = op_isub,
+    [OP_IMUL]  = op_imul,
+    [OP_IDIV]  = op_idiv,
+    [OP_IMOD]  = op_imod,
+    [OP_IINC]  = op_iinc,
+    [OP_IDEC]  = op_idec,
+    [OP_IPOW]  = op_ipow,
+    [OP_ISQR]  = op_isqr,
+
+    [OP_PUSH] = op_push,
+    [OP_POP]  = op_pop,
+    [OP_SWAP] = op_swap,
+    [OP_DUP]  = op_dup,
+    [OP_OVER] = op_over,
+    [OP_LROT] = op_lrot,
+    [OP_RROT] = op_rrot,
+    
+    [OP_EQ]  = op_eq,
+    [OP_NE]  = op_ne,
+    [OP_IGT] = op_igt,
+    [OP_ILT] = op_ilt,
+    [OP_IGE] = op_ige,
+    [OP_ILE] = op_ile,
+
+    [OP_AND] = op_and,
+    [OP_OR]  = op_or,
+    [OP_NOT] = op_not,
+
+    [OP_TOP]   = op_top,
+    [OP_PUT]   = op_put,
+    [OP_DUMP]  = op_dump,
+    [OP_TRACE] = op_trace,
+    [OP_PUTS]  = op_puts,
+};
+
 #define EXEC_ERR_UNKNOWN_OPC 1
 int sblvm_exec(sblvm_t* vm){
     uint32_t inst = vm->insts.data[vm->ip];
     uint16_t op = DEC_OP(inst);
-    switch (op) {
-        case OP_NONE:
-            vm->halt = true;
-            break;
-        case OP_IADD: {
-             sblcell_t a = stk_pop(&vm->data);
-             sblcell_t b = stk_pop(&vm->data);
-             stk_push(&vm->data,sblint(a.as.i + b.as.i));
-             break;
-         }
-        case OP_ISUB:{
-             sblcell_t a = stk_pop(&vm->data);
-             sblcell_t b = stk_pop(&vm->data);
-             stk_push(&vm->data,sblint(a.as.i - b.as.i));
-             break;
-        }
-        case OP_IMUL:{
-             sblcell_t a = stk_pop(&vm->data);
-             sblcell_t b = stk_pop(&vm->data);
-             stk_push(&vm->data,sblint(a.as.i * b.as.i));
-             break;
-        }
-        case OP_IDIV:{
-            sblcell_t a = stk_pop(&vm->data);
-            sblcell_t b = stk_pop(&vm->data);
-            stk_push(&vm->data,sblint(a.as.i / b.as.i));
-            break;
-        }
-        case OP_IMOD:{
-            sblcell_t a = stk_pop(&vm->data);
-            sblcell_t b = stk_pop(&vm->data);
-            stk_push(&vm->data, sblint(a.as.i % b.as.i));
-            break;
-        }
-        case OP_IINC:{
-            sblcell_t a = stk_pop(&vm->data);
-            stk_push(&vm->data,sblint(a.as.i + 1));
-            break;
-        }
-        case OP_IDEC:{
-            sblcell_t a = stk_pop(&vm->data);
-            stk_push(&vm->data,sblint(a.as.i - 1));
-            break;
-        }
-        case OP_IPOW:{
-            sblcell_t a = stk_pop(&vm->data);
-            sblcell_t b = stk_pop(&vm->data);
-            stk_push(&vm->data, sblint(powll(a.as.i, b.as.i)));
-            break;
-        }
-        case OP_ISQR:{
-            sblcell_t x = stk_pop(&vm->data);
-            x.as.i = x.as.i * x.as.i;
-            stk_push(&vm->data, x);
-            break;
-        }
-        case OP_PUSH:{
-                sblcell_t x = vm->consts.data[cast(uint32_t,DEC_K(inst))];
-                stk_push(&vm->data,x);
-                break;
-        }
-        case OP_POP:{
-            stk_pop(&vm->data);
-            break;
-        }
-        case OP_SWAP:{
-            sblcell_t a = stk_pop(&vm->data);
-            sblcell_t b = stk_pop(&vm->data);
-            stk_push(&vm->data,a);
-            stk_push(&vm->data,b);
-            break;
-        }
-        case OP_DUP:{
-            sblcell_t x = stk_pop(&vm->data);
-            stk_push(&vm->data,x);
-            stk_push(&vm->data,x);
-            break;
-        }
-        case OP_OVER:{
-            sblcell_t a = stk_pop(&vm->data);
-            sblcell_t b = stk_pop(&vm->data);
 
-            stk_push(&vm->data,b);
-            stk_push(&vm->data,a);
-            stk_push(&vm->data,b);
-            break;
-        }
-        case OP_LROT:{
-            sblcell_t tmp = vm->data.data[vm->data.sp - 3];
-            vm->data.data[vm->data.sp - 3] = vm->data.data[vm->data.sp - 2];
-            vm->data.data[vm->data.sp - 2] = vm->data.data[vm->data.sp - 1];
-            vm->data.data[vm->data.sp - 1] = tmp;
-            break;
-        }
-        case OP_RROT:{
-            sblcell_t tmp = vm->data.data[vm->data.sp - 1];
-            vm->data.data[vm->data.sp - 1] = vm->data.data[vm->data.sp - 2];
-            vm->data.data[vm->data.sp - 2] = vm->data.data[vm->data.sp - 3];
-            vm->data.data[vm->data.sp - 3] = tmp;
-            break;
-        }
-        case OP_JUMP:{
-            sblcell_t x = vm->consts.data[cast(uint32_t,DEC_K(inst))];
-            vm->ip += (int32_t)x.as.i - 1;
-            break;
-        }
-        case OP_HOP:{
-            sblcell_t c = stk_pop(&vm->data);
-            if(c.as.u) vm->ip++;
-            break;
-        }
-        case OP_EQ:{
-            sblcell_t a = stk_pop(&vm->data);
-            sblcell_t b = stk_pop(&vm->data);
-            stk_push(&vm->data,sblbool(sblcell_eq(a,b)));
-            break;
-        }
-        case OP_NE:{
-            sblcell_t a = stk_pop(&vm->data);
-            sblcell_t b = stk_pop(&vm->data);
-            stk_push(&vm->data,sblbool(!sblcell_eq(a,b)));
-            break;
-        }
-        case OP_IGT:{
-            sblcell_t a = stk_pop(&vm->data);
-            sblcell_t b = stk_pop(&vm->data);
-            stk_push(&vm->data,sblint(a.as.i > b.as.i));
-            break;
-        }
-        case OP_ILT:{
-            sblcell_t a = stk_pop(&vm->data);
-            sblcell_t b = stk_pop(&vm->data);
-            stk_push(&vm->data,sblbool(a.as.i < b.as.i));
-            break;
-        }
-        case OP_IGE:{
-            sblcell_t a = stk_pop(&vm->data);
-            sblcell_t b = stk_pop(&vm->data);
-            stk_push(&vm->data,sblbool(a.as.i >= b.as.i));
-            break;
-        }
-        case OP_ILE:{
-            sblcell_t a = stk_pop(&vm->data);
-            sblcell_t b = stk_pop(&vm->data);
-            stk_push(&vm->data,sblbool(a.as.i <= b.as.i));
-            break;
-        }
-        case OP_AND:{
-            sblcell_t a = stk_pop(&vm->data);
-            sblcell_t b = stk_pop(&vm->data);
-            stk_push(&vm->data,sblbool(a.as.i && b.as.i));
-            break;
-        }
-        case OP_OR:{
-            sblcell_t a = stk_pop(&vm->data);
-            sblcell_t b = stk_pop(&vm->data);
-            stk_push(&vm->data,sblbool(a.as.i || b.as.i));
-            break;
-        }
-        case OP_NOT:{
-            sblcell_t a = stk_pop(&vm->data);
-            stk_push(&vm->data,sblbool(!a.as.u));
-            break;
-        }
-        case OP_CALL:{
-            sblcell_t off = vm->consts.data[cast(uint32_t,DEC_K(inst))];
-            stk_push(&vm->call,sbluint(vm->ip));
-            vm->ip += (int)off.as.i - 1;
-            break;
-        }
-        case OP_RET:{
-            vm->ip = stk_pop(&vm->call).as.u;
-            break;
-        }
-        case OP_TOP:{
-            sblcell_print(vm->data.data[vm->data.sp - 1]);
-            break;
-        }
-        case OP_PUT:{
-            sblcell_t c = vm->data.data[vm->data.sp - 1];
-            if(c.type != CELL_INT && c.type != CELL_UINT){
-                printf("ERROR: Tried to print non integer as character");
-            }
-            printf("%c",(char)vm->data.data[vm->data.sp - 1].as.i);
-            break;
-        }
-        case OP_DUMP:{
-            sblcell_t x = stk_pop(&vm->data);
-            sblcell_print(x);
-            break;
-        }
-        case OP_TRACE:{
-            stk_trace(&vm->data);
-            break;
-        }
-        case OP_PUTS:{
-            uint32_t off = vm->data.data[vm->data.sp - 1].as.u;
-            printf("%s",vm->statmem.data + off);
-            break;
-        }
-        default:
-            return EXEC_ERR_UNKNOWN_OPC;
-    }
+    operations[op](vm,inst);
+
     vm->ip++;
     return 0;
 }
