@@ -35,3 +35,15 @@ void strtrim(char* str){
         str[e - s + 1] = '\0';
     }
 }
+
+long long powll(long long a, long long b){
+    long long p = 1;
+    for(long long i = 0; i < b; i++) p *= a;
+    return p;
+}
+
+unsigned long long powull(unsigned long long a, unsigned long long b){
+    unsigned long long p = 1;
+    for(unsigned long long i = 0; i < b; i++) p *= a;
+    return p;
+}

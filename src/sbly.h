@@ -2,12 +2,14 @@
 #define _SBLY_H
 
 #include <stdint.h>
-#include "sblval.h"
+#include "sblcell.h"
 
 typedef enum token_kind{
-    TOK_NONE   = 0,      // nothing, eof
-    TOK_NUMLIT = 2,      // number literal
-    TOK_STRLIT = 3,      // string literal (reserved for future)
+    TOK_NONE     = 0,      // nothing, eof
+    TOK_INTLIT   = 1,      // signed literal
+    TOK_UINTLIT  = 2,      // unsigned literal
+    TOK_FLOATLIT = 3,      // float literal
+    TOK_STRLIT   = 4,      // string literal (reserved for future)
 
     TOK_LABEL_DEF = 10,  // :foo
     TOK_IDENT     = 11,  // foo
@@ -30,7 +32,11 @@ typedef struct token{
     tokind_n kind;
     const char* start;
     size_t len;
-    sblnum_t number;
+    union{
+        sblfloat_t f;
+        sbluint_t  u;
+        sblint_t   i;
+    }num;
     int16_t  op;
     uint32_t line, column;
 }token_t;

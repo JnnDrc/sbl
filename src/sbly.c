@@ -5,14 +5,14 @@
 
 #include "sbly.h"
 
-#include "sblval.h"
 #include "sblop.h"
 #include "sbldef.h"
 
 char* tokk_string(tokind_n tk){
     switch(tk){
         case TOK_NONE:          return "NONE";
-        case TOK_NUMLIT:        return "NUMLIT";
+        case TOK_INTLIT:        return "INTLIT";
+        case TOK_FLOATLIT:      return "FLOATLIT";
         case TOK_STRLIT:        return "STRLIT";
         case TOK_LABEL_DEF:     return "LABEL_DEF";
         case TOK_IDENT:         return "IDENT";
@@ -72,19 +72,57 @@ static void skip_ws_comment(lexer_t *l){
 static token_t lex_number(lexer_t *l){
     size_t start = l->pos;
     uint32_t col = l->column;
+    
+    bool is_fp = false;
+    
+    if(l->src[l->pos] == '+' || l->src[l->pos] == '-'){
+        l->pos++;
+        l->column++;
+    }
 
     while(l->pos < l->len && isdigit((int)l->src[l->pos])){
         l->pos++;
         l->column++;
     }
 
+    if(l->pos < l->len && l->src[l->pos] == '.'){
+        is_fp  = true;
+        l->pos++;
+        l->column++;
+        while(l->pos < l->len && isdigit((int)l->src[l->pos])){
+            l->pos++;
+            l->column++;
+        }
+    }
+
+    char suffix = 0;
+    if(l->pos < l->len){
+        char c = l->src[l->pos];
+        if(c == 'f' || c == 'i' || c == 'u'){
+            suffix = c;
+            l->pos++;
+            l->column++;
+        }
+    }
+    
     token_t t = {0};
-    t.kind    = TOK_NUMLIT;
     t.start   = l->src + start;
     t.len     = l->pos - start;
-    t.number  = strton(t.start,NULL);
     t.line    = l->line;
     t.column  = col;
+
+    if(is_fp || suffix == 'f'){
+        t.kind  = TOK_FLOATLIT;
+        t.num.f = strtofp(t.start,NULL);
+    }
+    else if(suffix == 'u'){
+        t.kind  = TOK_UINTLIT;
+        t.num.u = strtou(t.start,NULL,10);
+    }
+    else{
+        t.kind  = TOK_INTLIT;
+        t.num.i = strtoi(t.start,NULL,10);
+    }
 
     return t;
 }
@@ -155,6 +193,8 @@ token_t lex_next(lexer_t* l){
     if(l->pos >= l->len) return (token_t){.kind = TOK_NONE};
 
     char c = l->src[l->pos];
+    
+    if((c == '+' || c == '-') && isdigit(l->src[l->pos+1])) return lex_number(l);
 
     if ((int)isdigit(c)) return lex_number(l);
     

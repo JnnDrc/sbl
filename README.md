@@ -18,7 +18,6 @@ you will get 4 binaries:
 - sbl       : interpreter
 - sblc      : bytecode compiler
 - sbli      : binary inspector/analyzer
-- sblr      : repl
 
 write a code in file (usualy .sl) and compile it with sblc bytecode (usualy .bl)
 the virtual machine will execute the bytecode

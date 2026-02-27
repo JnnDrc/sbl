@@ -8,8 +8,8 @@ SRC_DIR := src
 TARGET_SBL    := sbl
 TARGET_SBLC   := sblc
 TARGET_SBLI   := sbli
-TARGET_SBLR   := sblr
-TARGETS       := $(TARGET_SBL) $(TARGET_SBLC) $(TARGET_SBLI) $(TARGET_SBLR)
+# TARGET_SBLR   := sblr
+TARGETS       := $(TARGET_SBL) $(TARGET_SBLC) $(TARGET_SBLI)
 TARGETS_MAIN  := $(addsuffix .c, $(TARGETS))
 
 
@@ -35,9 +35,9 @@ $(TARGET_SBLI): %: $(SRC_DIR)/%.o $(OBJ)
 	$(CC) -c $(SRC_DIR)/$@.c -o $(SRC_DIR)/$@.o $(CFLAGS) $(MYCFLAGS)
 	$(CC) -o $@ $^
 
-$(TARGET_SBLR): %: $(SRC_DIR)/%.o $(OBJ)
-	$(CC) -c $(SRC_DIR)/$@.c -o $(SRC_DIR)/$@.o $(CFLAGS) $(MYCFLAGS)
-	$(CC) -o $@ $^
+# $(TARGET_SBLR): %: $(SRC_DIR)/%.o $(OBJ)
+# 	$(CC) -c $(SRC_DIR)/$@.c -o $(SRC_DIR)/$@.o $(CFLAGS) $(MYCFLAGS)
+# 	$(CC) -o $@ $^
 
 clean:
 	rm -f $(OBJ) $(addprefix $(SRC_DIR)/, $(addsuffix .o, $(TARGETS))) $(TARGETS) 

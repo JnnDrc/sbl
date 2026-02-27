@@ -40,18 +40,23 @@ int main(int argc, char* argv[]){
         printf("%0*d: (%03d) %s\t    %d (%hu %hu) \n",width,i,DEC_OP(it),sblo_op_string(DEC_OP(it)),cast(uint32_t,DEC_K(it)),cast(uint16_t,DEC_A(it)),cast(uint16_t,DEC_B(it)));
     }
     printf("CONSTANTS------------------------------*\n");
-    // printf("i:    K\n");
     for(uint i = 0; i < vm.consts.size; i++){
-        sblval_t k = vm.consts.data[i];
+        sblcell_t k = vm.consts.data[i];
         switch(k.type){
-            case SBL_VAL_NUM:
-                printf("%0*d:    num %.02f\n",width,i, k.as.num);
+            case CELL_FLOAT:
+                printf("%0*d:    float  %.02f\n",width,i, k.as.f);
                 break;
-            case SBL_VAL_INT:
-                printf("%0*d:    int %d\n",width,i, k.as.off);
+            case CELL_UINT:
+                printf("%0*d:    uint   %zu\n",width,i, k.as.u);
                 break;
-            case SBL_VAL_PTR:
-                printf("%0*d:    ptr %p\n",width,i, k.as.ptr);
+            case CELL_INT:
+                printf("%0*d:    int    %zd\n",width,i, k.as.i);
+                break;
+            case CELL_BOOL:
+                printf("%0*d:    bool   %s\n",width,i, k.as.u ? "true" : "false");
+                break;
+            case CELL_PTR:
+                printf("%0*d:    ptr    %p\n",width,i, (void*)k.as.u);
                 break;
             default:
                 fprintf(stderr, "ERROR: Unknown value on constants table");

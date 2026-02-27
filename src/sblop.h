@@ -3,53 +3,96 @@
 
 #include <stdint.h>
 
+// type notation
+// x/y/z/w -> any
+// i -> int
+// u -> uint
+// z -> integer (int/uint)
+// b -> bool
+// f -> float
+// p -> pointer
+// o -> offset (uint/pointer) (local address/ heap address)
 typedef enum sbl_op{
-    OP_NONE = 0,    // 0
+    // General -----------------------------------------------------------------
+    OP_NONE = 0,    // no op, stop execution (EOF)
+    OP_NOP  = 1,    // no op, continue
+    OP_HALT = 2,    // stop execution
 
-    OP_ADD   = 1,   // op [a b] -> [c]
-    OP_SUB   = 2,   // op [a b] -> [c]
-    OP_MUL   = 3,   // op [a b] -> [c]
-    OP_DIV   = 4,   // op [a b] -> [c]
-    OP_MOD   = 5,   // op [a b] -> [c]
-    OP_INC   = 6,   // op [a] -> [b]
-    OP_DEC   = 7,   // op [a] -> [b]
-    OP_SUM   = 8,   // op [... a b c n] -> [s]
-    OP_PROD  = 9,   // op [... a b c n] -> [p]
+    OP_JUMP  = 3,   // op k   --    (ip += k)
+    OP_HOP   = 4,   // op   b --    (b ? ip+2 : ip+1)
+                    //
+    OP_CALL  = 5,   // op k    -- ip (call stack)
+    OP_RET   = 6,   // op   ip -- (call stack)
+    // Arithmetic --------------------------------------------------------------
+    // -- Int
+    OP_IADD   = 10,   // op i i -- i
+    OP_ISUB   = 11,   // op i i -- i
+    OP_IMUL   = 12,   // op i i -- i
+    OP_IDIV   = 13,   // op i i -- i
+    OP_IMOD   = 14,   // op i i -- i
+    OP_IINC   = 15,   // op i -- i
+    OP_IDEC   = 16,   // op i -- i
+    OP_IPOW   = 17,   // op  [a b] -> [c]
+    OP_ISQR   = 18,   // op  [a] -> [a]
+    // -- Uint
+    OP_UADD   = 20,   // op u u -- u
+    OP_USUB   = 21,   // op u u -- u
+    OP_UMUL   = 22,   // op u u -- u
+    OP_UDIV   = 23,   // op u u -- u
+    OP_UMOD   = 24,   // op u u -- u
+    OP_UINC   = 25,   // op u -- u
+    OP_UDEC   = 26,   // op u -- u
+    OP_UPOW   = 27,   // op u u -- u
+    OP_USQR   = 28,   // op u -- u
+    // -- Float
+    OP_FADD   = 30,   // op f f -- f
+    OP_FSUB   = 31,   // op f f -- f
+    OP_FMUL   = 32,   // op f f -- f
+    OP_FDIV   = 33,   // op f f -- f
+    OP_FMOD   = 34,   // op f f -- f
+    OP_FINC   = 35,   // op f -- f
+    OP_FDEC   = 36,   // op f -- f
+    OP_FPOW   = 37,   // op f f -- f
+    OP_FSQR   = 38,   // op f -- f
+    OP_FSQRT  = 39,   // op f -- f
+    // Stack operations --------------------------------------------------------
+    OP_PUSH  = 40,  // op k   -- x
+    OP_POP   = 41,  // op   x -- 
+    OP_SWAP  = 42,  // op   x y -- y x
+    OP_DUP   = 43,  // op   x -- x x
+    OP_OVER  = 44,  // op   x y -- x y x
+    OP_LROT  = 45,  // op   x y z -- y z x
+    OP_RROT  = 46,  // op   x y z -- z x y
 
-    OP_PUSH  = 10,  // op k [] -> [a]
-    OP_POP   = 11,  // op   [a] -> []
-    OP_SWAP  = 12,  // op   [a b] -> [b a]
-    OP_DUP   = 13,  // op   [a] -> [a a]
-    OP_OVER  = 14,  // op   [a b] -> [a b a]
-    OP_LROT  = 15,  // op   [a b c] -> [b c a]
-    OP_RROT  = 16,  // op   [a b c] -> [c a b]
+    // Logic -------------------------------------------------------------------
+    OP_EQ    = 50,  // op   x y -- b
+    OP_NE    = 51,  // op   x y -- b
+    // -- Int
+    OP_IGT   = 52,  // op   i i -- b
+    OP_ILT   = 53,  // op   i i -- b
+    OP_IGE   = 54,  // op   i i -- b
+    OP_ILE   = 55,  // op   i i -- b
+    // -- Uint
+    OP_UGT   = 56,  // op   u u -- b
+    OP_ULT   = 57,  // op   u u -- b
+    OP_UGE   = 58,  // op   u u -- b
+    OP_ULE   = 59,  // op   u u -- b
+    // -- Float
+    OP_FGT   = 60,  // op   f f -- b
+    OP_FLT   = 61,  // op   f f -- b
+    OP_FGE   = 62,  // op   f f -- b
+    OP_FLE   = 63,  // op   f f -- b
 
-    OP_JUMP  = 20,  // op k [] -> [] (ip = ip - #k)
-    OP_HOP   = 21,  // op   [c] -> [] (ip = c ? ip+2 : ip+1)
+    OP_AND   = 65,  // op   b b -- b
+    OP_OR    = 66,  // op   b b -- b
+    OP_NOT   = 67,  // op   b -- b
 
-    OP_GT    = 25,  // op   [a b] -> [c]
-    OP_LT    = 26,  // op   [a b] -> [c]
-    OP_GE    = 27,  // op   [a b] -> [c]
-    OP_LE    = 28,  // op   [a b] -> [c]
-    OP_EQ    = 29,  // op   [a b] -> [c]
-    OP_NE    = 30,  // op   [a b] -> [c]
-
-    OP_AND   = 31,  // op   [a b] -> [c]
-    OP_OR    = 32,  // op   [a b] -> [c]
-    OP_NOT   = 33,  // op   [a b] -> [c]
-
-    OP_POW   = 35,   // op  [a b] -> [c]
-    OP_SQR   = 36,   // op  [a] -> [a]
-    OP_SQRT  = 37,   // op  [a] -> [a]
-
-    OP_CALL  = 40,   // op k c[] -> c[ip]
-    OP_RET   = 41,   // op   c[ip] -> [ip]
-
-    OP_TOP   = 80,  // op (prints number a)
-    OP_PUT   = 81,  // op (prints char of value a)
-    OP_DUMP  = 82,  // op [a] -> [] (prints value of a, drops it)
-    OP_TRACE = 83,  // op debug print entire stack
-    OP_PUTS  = 84,
+    // IO ----------------------------------------------------------------------
+    OP_TOP   = 80,  // op x -- x (prints value)
+    OP_PUT   = 81,  // op z -- z (prints char of value a)
+    OP_DUMP  = 82,  // op x --   (prints value of a, drops it)
+    OP_TRACE = 83,  // op . -- . (debug print entire stack)
+    OP_PUTS  = 84,  // op o --   (print null terminated string)
 }sbl_op_n;
 
 struct sblo_str_op{
